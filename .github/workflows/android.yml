@@ -14,13 +14,17 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
-      - run: gradle --no-daemon :app:assembleDebug
+      - name: Build debug APK
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Verify signed APK
+        run: |
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: LifePlan-debug-apk
+          name: LifePlan-v0.2.2-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
