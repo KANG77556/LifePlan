@@ -19,6 +19,12 @@ jobs:
           gradle-version: '8.10.2'
       - name: Build release APK
         run: gradle --no-daemon :app:assembleRelease
+      - name: Upload unsigned APK for local signing fallback
+        uses: actions/upload-artifact@v4
+        with:
+          name: LifePlan-unsigned-release
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          retention-days: 7
       - name: Sign with persistent key
         env:
           LIFEPLAN_KEYSTORE_B64: ${{ secrets.LIFEPLAN_KEYSTORE_B64 }}
