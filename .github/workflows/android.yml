@@ -42,6 +42,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
+      - name: Validate planner JavaScript and dashboard hooks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app/src/main/assets/index.html')
+          html=p.read_text(encoding='utf-8')
+          js=html.split('<script>',1)[1].split('</script>',1)[0]
+          Path('/tmp/lifeplan-app.js').write_text(js,encoding='utf-8')
+          for token in ['renderHome(now)','function saveBatchTemplate()','function loadBatchTemplate()','id="heroTaskCount"','id="homeRecurring"','id="dailyTasks"','versionName']:
+              if token!='versionName' and token not in html:
+                  raise SystemExit('Missing app hook: '+token)
+          PY
+          node --check /tmp/lifeplan-app.js
       - name: Build release APK
         run: gradle --no-daemon :app:assembleRelease
       - name: Sign and verify with existing key
