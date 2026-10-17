@@ -52,6 +52,8 @@ public class MainActivity extends Activity {
         });
         web.setWebChromeClient(new WebChromeClient());
         web.addJavascriptInterface(new Object() {
+            @JavascriptInterface public void syncReminders(String json) { runOnUiThread(() -> ReminderReceiver.schedule(MainActivity.this,json)); }
+            @JavascriptInterface public void requestReminderPermission() { runOnUiThread(() -> { if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 405); }); }
             @JavascriptInterface public void openInstaller(String url) {
                 runOnUiThread(() -> downloadUpdate(url));
             }
