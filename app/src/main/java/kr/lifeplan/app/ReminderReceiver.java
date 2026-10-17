@@ -25,7 +25,7 @@ public class ReminderReceiver extends android.content.BroadcastReceiver {
       JSONArray items=new JSONArray(json);
       for(int i=0;i<items.length();i++) {
         JSONObject t=items.optJSONObject(i);if(t==null)continue;
-        int id=t.optInt("id",0);if(id==0)continue;
+        int id=t.optString("id","").hashCode();if(id==0)continue;
         Intent intent=new Intent(c,ReminderReceiver.class).setAction("lifeplan.ALERT").putExtra("id",id);
         PendingIntent pi=PendingIntent.getBroadcast(c,id,intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         am.cancel(pi);
@@ -65,7 +65,7 @@ public class ReminderReceiver extends android.content.BroadcastReceiver {
     int id=intent.getIntExtra("id",0);String title="반복 생활관리";
     try{
       JSONArray a=new JSONArray(c.getSharedPreferences("lifeplan_alerts",0).getString("items","[]"));
-      for(int i=0;i<a.length();i++){JSONObject o=a.optJSONObject(i);if(o!=null&&o.optInt("id")==id){title=o.optString("name",title);break;}}
+      for(int i=0;i<a.length();i++){JSONObject o=a.optJSONObject(i);if(o!=null&&o.optString("id","").hashCode()==id){title=o.optString("name",title);break;}}
     }catch(Exception ignored){}
     channel(c);
     Intent launch=c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
