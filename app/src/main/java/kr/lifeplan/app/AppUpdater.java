@@ -106,7 +106,22 @@ public final class AppUpdater {
 
     public void onResume() {
         foreground = true;
+        if (pendingAlreadyInstalled()) return;
         inspectPending();
+    }
+
+    private boolean pendingAlreadyInstalled() {
+        long id = prefs.getLong(P_ID, -1L);
+        String target = prefs.getString(P_VERSION, "");
+        if (id < 0 || target.isEmpty()) return false;
+        try {
+            if (UpdateUtil.compareVersions(installedVersion(), target) >= 0) {
+                clearPending(id);
+                status("업데이트 설치 완료. 최신 버전을 사용 중입니다.");
+                return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     public void onPause() {
@@ -125,6 +140,7 @@ public final class AppUpdater {
         web.evaluateJavascript("window.LifePlanAutoUpdateSetting && window.LifePlanAutoUpdateSetting("
             + autoEnabled() + ");", null);
         status(lastStatus);
+        if (pendingAlreadyInstalled()) status("업데이트 설치 완료.");
         inspectPending();
         if (autoEnabled() && !autoCheckedThisSession && prefs.getLong(P_ID, -1L) < 0) { autoCheckedThisSession = true; checkForUpdates(true); }
     }
@@ -141,6 +157,7 @@ public final class AppUpdater {
 
     public void checkForUpdates(boolean automatic) {
         if (destroyed || (automatic && !autoEnabled())) return;
+        pendingAlreadyInstalled();
         if (prefs.getLong(P_ID, -1L) >= 0) {
             if (!automatic) installerLaunched = false; // Manual retry if the person canceled installation.
             inspectPending();
@@ -376,7 +393,7 @@ public final class AppUpdater {
     }
 
     private void clearPending(long id) {
-        manager.remove(id);
+        try { manager.remove(id); } catch (Exception ignored) {}
         prefs.edit().remove(P_ID).remove(P_SHA).remove(P_VERSION).remove(P_FILE).apply();
         installerLaunched = false;
     }
