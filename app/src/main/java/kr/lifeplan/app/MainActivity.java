@@ -68,6 +68,7 @@ public class MainActivity extends Activity {
             @JavascriptInterface public void requestReminderPermission() { runOnUiThread(() -> { if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 405); }); }
             @JavascriptInterface public void openInstaller(String url) { runOnUiThread(() -> updater.checkForUpdates(false)); }
             @JavascriptInterface public void checkForUpdates() { runOnUiThread(() -> updater.checkForUpdates(false)); }
+            @JavascriptInterface public void retryUpdateDownload() { runOnUiThread(() -> updater.retryDownload()); }
             @JavascriptInterface public void setAutoUpdate(boolean value) { runOnUiThread(() -> updater.setAutoEnabled(value)); }
         }, "LifePlanNative");
         // Android 15 (targetSdk 35) draws content behind the system status bar.
