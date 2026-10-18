@@ -51,6 +51,7 @@ public final class AppUpdater {
     private static final String P_SHA = "expected_sha";
     private static final String P_FILE = "file_name";
     private static final String P_INSTALL_OFFERED = "installer_offered";
+    private static final String P_AUTOMATIC_DOWNLOAD = "automatic_download";
 
     private final Activity activity;
     private final WebView web;
@@ -166,6 +167,12 @@ public final class AppUpdater {
 
     public void setAutoEnabled(boolean enabled) {
         prefs.edit().putBoolean(P_AUTO, enabled).apply();
+        if (!enabled && prefs.getBoolean(P_AUTOMATIC_DOWNLOAD, false)) {
+            long pending = prefs.getLong(P_ID, -1L);
+            if (pending >= 0) clearPending(pending);
+            status("자동 업데이트를 끄고 자동 다운로드를 중단했습니다. 수동 업데이트는 계속 가능합니다.");
+            return;
+        }
         status(enabled ? "자동 업데이트가 켜졌습니다." : "자동 업데이트가 꺼졌습니다. 수동 확인은 계속 가능합니다.");
         if (enabled && prefs.getLong(P_ID, -1L) < 0) { autoCheckedThisSession = true; checkForUpdates(true); }
     }
@@ -198,7 +205,7 @@ public final class AppUpdater {
                     } else if (latest == null) {
                         status("현재 최신 버전을 사용하고 있습니다.");
                     } else {
-                        beginDownload(latest);
+                        beginDownload(latest, automatic);
                     }
                 });
             } catch (Exception error) {
@@ -262,7 +269,7 @@ public final class AppUpdater {
         return info.versionName;
     }
 
-    private void beginDownload(Release release) {
+    private void beginDownload(Release release, boolean automatic) {
         if (destroyed) return;
         if (prefs.getLong(P_ID, -1L) >= 0) {
             inspectPending();
@@ -283,7 +290,8 @@ public final class AppUpdater {
             long id = manager.enqueue(request);
             prefs.edit().putLong(P_ID, id).putString(P_VERSION, release.version)
                 .putString(P_SHA, release.sha).putString(P_FILE, fileName)
-                .putBoolean(P_INSTALL_OFFERED, false).apply();
+                .putBoolean(P_INSTALL_OFFERED, false)
+                .putBoolean(P_AUTOMATIC_DOWNLOAD, automatic).apply();
             installerLaunched = false;
             permissionPageOpened = false;
             status("v" + release.version + " 다운로드 중… 완료되면 설치 화면을 자동으로 엽니다.");
@@ -442,7 +450,7 @@ public final class AppUpdater {
     private void clearPending(long id) {
         try { manager.remove(id); } catch (Exception ignored) {}
         prefs.edit().remove(P_ID).remove(P_SHA).remove(P_VERSION).remove(P_FILE)
-            .remove(P_INSTALL_OFFERED).apply();
+            .remove(P_INSTALL_OFFERED).remove(P_AUTOMATIC_DOWNLOAD).apply();
         installerLaunched = false;
     }
 

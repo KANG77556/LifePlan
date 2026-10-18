@@ -83,6 +83,31 @@ jobs:
           JAVA
           javac -d /tmp/lifeplan-updater-test /tmp/lifeplan-updater-test/kr/lifeplan/app/UpdateUtil.java /tmp/lifeplan-updater-test/UpdateUtilTest.java
           java -cp /tmp/lifeplan-updater-test UpdateUtilTest
+      - name: Check updater lifecycle wiring
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          updater=Path('app/src/main/java/kr/lifeplan/app/AppUpdater.java').read_text()
+          activity=Path('app/src/main/java/kr/lifeplan/app/MainActivity.java').read_text()
+          html=Path('app/src/main/assets/index.html').read_text()
+          checks=[
+              (updater,'P_AUTOMATIC_DOWNLOAD'),
+              (updater,'clearPending(pending)'),
+              (updater,'beginDownload(latest, automatic)'),
+              (updater,'private boolean pendingAlreadyInstalled()'),
+              (updater,'prefs.edit().putBoolean(P_INSTALL_OFFERED, true)'),
+              (updater,'UpdateUtil.shouldAutoOpenInstaller'),
+              (activity,'updater.onResume()'),
+              (activity,'updater.onDestroy()'),
+              (activity,'updater.setAutoEnabled(value)'),
+              (html,'id="autoUpdate"'),
+              (html,'function retryUpdateDownload()'),
+          ]
+          for source,token in checks:
+              assert token in source, f'Missing updater hook: {token}'
+          assert 'versionName \'0.4.4\'' in Path('app/build.gradle').read_text()
+          print('Updater lifecycle wiring checks passed')
+          PY
       - name: Build release APK
         run: gradle --no-daemon :app:assembleRelease
       - name: Sign and verify with existing key
