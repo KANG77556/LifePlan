@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> pendingFileSelection;
     private static final int REQUEST_BACKUP_FILE = 406;
     private DownloadManager downloads;
+    private AppUpdater updater;
     private long downloadId = -1L;
     private final BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
@@ -49,6 +50,9 @@ public class MainActivity extends Activity {
         settings.setDomStorageEnabled(true);
         settings.setDefaultTextEncodingName("UTF-8");
         web.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                if (url.startsWith("file:///android_asset/")) updater.onWebReady();
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 if (url.startsWith("https://")) {
                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
@@ -80,9 +84,9 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Object() {
             @JavascriptInterface public void syncReminders(String json) { runOnUiThread(() -> ReminderReceiver.schedule(MainActivity.this,json)); }
             @JavascriptInterface public void requestReminderPermission() { runOnUiThread(() -> { if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 405); }); }
-            @JavascriptInterface public void openInstaller(String url) {
-                runOnUiThread(() -> downloadUpdate(url));
-            }
+            @JavascriptInterface public void openInstaller(String url) { runOnUiThread(() -> updater.checkForUpdates(false)); }
+            @JavascriptInterface public void checkForUpdates() { runOnUiThread(() -> updater.checkForUpdates(false)); }
+            @JavascriptInterface public void setAutoUpdate(boolean value) { runOnUiThread(() -> updater.setAutoEnabled(value)); }
         }, "LifePlanNative");
         IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(downloadReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
@@ -107,6 +111,8 @@ public class MainActivity extends Activity {
                 return windowInsets;
             });
         }
+        updater = new AppUpdater(this, web);
+        updater.register();
         setContentView(root);
         if (Build.VERSION.SDK_INT >= 35) root.requestApplyInsets();
         web.loadUrl("file:///android_asset/index.html");
@@ -187,7 +193,10 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override protected void onResume() { super.onResume(); if (updater != null) updater.onResume(); }
+    @Override protected void onPause() { if (updater != null) updater.onPause(); super.onPause(); }
     @Override protected void onDestroy() {
+        if (updater != null) updater.onDestroy();
         if (pendingFileSelection != null) {
             pendingFileSelection.onReceiveValue(null);
             pendingFileSelection = null;
