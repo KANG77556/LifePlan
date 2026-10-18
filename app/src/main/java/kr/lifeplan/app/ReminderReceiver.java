@@ -14,8 +14,25 @@ public class ReminderReceiver extends android.content.BroadcastReceiver {
     }
   }
   static void schedule(Context c,String json) {
+    String previous=c.getSharedPreferences("lifeplan_alerts",0).getString("items","[]");
+    cancelRemoved(c,previous,json);
     c.getSharedPreferences("lifeplan_alerts",0).edit().putString("items",json).apply();
     scheduleSaved(c);
+  }
+  static void cancelRemoved(Context c,String previous,String current) {
+    try {
+      JSONArray oldItems=new JSONArray(previous),newItems=new JSONArray(current);
+      java.util.HashSet<String> active=new java.util.HashSet<>();
+      for(int i=0;i<newItems.length();i++){JSONObject item=newItems.optJSONObject(i);if(item!=null)active.add(item.optString("id",""));}
+      AlarmManager alarms=(AlarmManager)c.getSystemService(Context.ALARM_SERVICE);
+      for(int i=0;i<oldItems.length();i++){
+        JSONObject item=oldItems.optJSONObject(i);if(item==null)continue;
+        String id=item.optString("id","");if(id.isEmpty()||active.contains(id))continue;
+        Intent intent=new Intent(c,ReminderReceiver.class).setAction("lifeplan.ALERT").putExtra("id",id.hashCode());
+        PendingIntent pi=PendingIntent.getBroadcast(c,id.hashCode(),intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+        alarms.cancel(pi);pi.cancel();
+      }
+    }catch(Exception ignored){}
   }
   static void scheduleSaved(Context c) {
     channel(c);
@@ -62,11 +79,12 @@ public class ReminderReceiver extends android.content.BroadcastReceiver {
   @Override public void onReceive(Context c,Intent intent){
     if(Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())||Intent.ACTION_TIME_CHANGED.equals(intent.getAction())||Intent.ACTION_TIMEZONE_CHANGED.equals(intent.getAction())){scheduleSaved(c);return;}
     if(!"lifeplan.ALERT".equals(intent.getAction()))return;
-    int id=intent.getIntExtra("id",0);String title="반복 생활관리";
+    int id=intent.getIntExtra("id",0);String title=null;
     try{
       JSONArray a=new JSONArray(c.getSharedPreferences("lifeplan_alerts",0).getString("items","[]"));
       for(int i=0;i<a.length();i++){JSONObject o=a.optJSONObject(i);if(o!=null&&o.optString("id","").hashCode()==id){title=o.optString("name",title);break;}}
     }catch(Exception ignored){}
+    if(title==null)return; // Ignore canceled or deleted entries still in the broadcast queue.
     channel(c);
     Intent launch=c.getPackageManager().getLaunchIntentForPackage(c.getPackageName());
     PendingIntent open=PendingIntent.getActivity(c,id,launch,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
