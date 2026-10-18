@@ -55,6 +55,29 @@ jobs:
                   raise SystemExit('Missing app hook: '+token)
           PY
           node --check /tmp/lifeplan-app.js
+      - name: Test auto-update URL and version validation
+        run: |
+          mkdir -p /tmp/lifeplan-updater-test/kr/lifeplan/app
+          cp app/src/main/java/kr/lifeplan/app/UpdateUtil.java /tmp/lifeplan-updater-test/kr/lifeplan/app/
+          cat > /tmp/lifeplan-updater-test/UpdateUtilTest.java <<'JAVA'
+          import kr.lifeplan.app.UpdateUtil;
+          public class UpdateUtilTest {
+            static void check(boolean ok) { if (!ok) throw new AssertionError(); }
+            public static void main(String[] args) {
+              check(UpdateUtil.compareVersions("0.4.10", "0.4.9") > 0);
+              check(UpdateUtil.compareVersions("0.4.1", "0.4.1") == 0);
+              check(UpdateUtil.compareVersions("0.4.1", "0.4.2") < 0);
+              String url="https://github.com/KANG77556/LifePlan/releases/download/v0.4.2/LifePlan-release.apk";
+              check("0.4.2".equals(UpdateUtil.versionFromTrustedUrl(url)));
+              check(UpdateUtil.versionFromTrustedUrl("https://github.com.evil.test/KANG77556/LifePlan/releases/download/v0.4.2/LifePlan-release.apk")==null);
+              check(UpdateUtil.versionFromTrustedUrl(url+"?redirect=1")==null);
+              check(UpdateUtil.githubSha256("sha256:"+"a".repeat(64)).equals("a".repeat(64)));
+              check(UpdateUtil.githubSha256("sha256:invalid")==null);
+            }
+          }
+          JAVA
+          javac -d /tmp/lifeplan-updater-test /tmp/lifeplan-updater-test/kr/lifeplan/app/UpdateUtil.java /tmp/lifeplan-updater-test/UpdateUtilTest.java
+          java -cp /tmp/lifeplan-updater-test UpdateUtilTest
       - name: Build release APK
         run: gradle --no-daemon :app:assembleRelease
       - name: Sign and verify with existing key
