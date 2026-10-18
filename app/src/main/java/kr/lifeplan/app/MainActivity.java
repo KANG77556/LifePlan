@@ -8,6 +8,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.graphics.Color;
+import android.graphics.Insets;
+import android.view.WindowInsets;
+import android.widget.FrameLayout;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -61,7 +65,28 @@ public class MainActivity extends Activity {
         IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(downloadReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         else registerReceiver(downloadReceiver, filter);
-        setContentView(web);
+        // Android 15 (targetSdk 35) draws content behind the system status bar.
+        // Keep WebView content below the status-bar/cutout inset, with a matching
+        // blue scrim behind the bar rather than relying on WebView CSS env().
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(Color.rgb(84, 124, 240));
+        FrameLayout.LayoutParams webLayout = new FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
+        root.addView(web, webLayout);
+        if (Build.VERSION.SDK_INT >= 35) {
+            root.setOnApplyWindowInsetsListener((view, windowInsets) -> {
+                Insets safe = windowInsets.getInsets(
+                    WindowInsets.Type.statusBars() | WindowInsets.Type.displayCutout());
+                FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) web.getLayoutParams();
+                if (lp.topMargin != safe.top) {
+                    lp.topMargin = safe.top;
+                    web.setLayoutParams(lp);
+                }
+                return windowInsets;
+            });
+        }
+        setContentView(root);
+        if (Build.VERSION.SDK_INT >= 35) root.requestApplyInsets();
         web.loadUrl("file:///android_asset/index.html");
     }
 
