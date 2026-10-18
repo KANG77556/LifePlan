@@ -18,6 +18,7 @@ import android.os.Environment;
 import android.provider.Settings;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
+import android.webkit.ValueCallback;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -25,6 +26,8 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity {
     private WebView web;
+    private ValueCallback<Uri[]> pendingFileSelection;
+    private static final int REQUEST_BACKUP_FILE = 406;
     private DownloadManager downloads;
     private long downloadId = -1L;
     private final BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
@@ -54,7 +57,26 @@ public class MainActivity extends Activity {
                 return false;
             }
         });
-        web.setWebChromeClient(new WebChromeClient());
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override public boolean onShowFileChooser(WebView view,
+                    ValueCallback<Uri[]> callback, FileChooserParams params) {
+                if (pendingFileSelection != null) pendingFileSelection.onReceiveValue(null);
+                pendingFileSelection = callback;
+                try {
+                    Intent choose = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    choose.addCategory(Intent.CATEGORY_OPENABLE);
+                    choose.setType("application/json");
+                    choose.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivityForResult(choose, REQUEST_BACKUP_FILE);
+                    return true;
+                } catch (Exception e) {
+                    pendingFileSelection = null;
+                    callback.onReceiveValue(null);
+                    Toast.makeText(MainActivity.this, "파일 선택기를 열 수 없습니다.", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+            }
+        });
         web.addJavascriptInterface(new Object() {
             @JavascriptInterface public void syncReminders(String json) { runOnUiThread(() -> ReminderReceiver.schedule(MainActivity.this,json)); }
             @JavascriptInterface public void requestReminderPermission() { runOnUiThread(() -> { if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 405); }); }
@@ -155,7 +177,21 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_BACKUP_FILE && pendingFileSelection != null) {
+            Uri[] uris = resultCode == RESULT_OK && data != null && data.getData() != null
+                ? new Uri[]{data.getData()} : null;
+            pendingFileSelection.onReceiveValue(uris);
+            pendingFileSelection = null;
+        }
+    }
+
     @Override protected void onDestroy() {
+        if (pendingFileSelection != null) {
+            pendingFileSelection.onReceiveValue(null);
+            pendingFileSelection = null;
+        }
         unregisterReceiver(downloadReceiver);
         super.onDestroy();
     }
