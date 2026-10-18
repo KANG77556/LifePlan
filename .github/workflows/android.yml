@@ -67,6 +67,11 @@ jobs:
               check(UpdateUtil.compareVersions("0.4.10", "0.4.9") > 0);
               check(UpdateUtil.compareVersions("0.4.1", "0.4.1") == 0);
               check(UpdateUtil.compareVersions("0.4.1", "0.4.2") < 0);
+              check(UpdateUtil.isPendingInstalled("0.4.3", "0.4.2"));
+              check(!UpdateUtil.isPendingInstalled("0.4.1", "0.4.2"));
+              check(UpdateUtil.shouldAutoOpenInstaller(true, false));
+              check(!UpdateUtil.shouldAutoOpenInstaller(true, true));
+              check(!UpdateUtil.shouldAutoOpenInstaller(false, false));
               String url="https://github.com/KANG77556/LifePlan/releases/download/v0.4.2/LifePlan-release.apk";
               check("0.4.2".equals(UpdateUtil.versionFromTrustedUrl(url)));
               check(UpdateUtil.versionFromTrustedUrl("https://github.com.evil.test/KANG77556/LifePlan/releases/download/v0.4.2/LifePlan-release.apk")==null);
