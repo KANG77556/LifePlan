@@ -26,6 +26,16 @@ public final class UpdateUtil {
         return 0;
     }
 
+    /** Installed app is the target version or a more recent version. */
+    public static boolean isPendingInstalled(String installedVersion, String pendingVersion) {
+        return compareVersions(installedVersion, pendingVersion) >= 0;
+    }
+
+    /** Do not repeatedly open Android's installer after a user has dismissed it. */
+    public static boolean shouldAutoOpenInstaller(boolean foreground, boolean alreadyOffered) {
+        return foreground && !alreadyOffered;
+    }
+
     public static String versionFromTrustedUrl(String raw) {
         if (raw == null) return null;
         try {
