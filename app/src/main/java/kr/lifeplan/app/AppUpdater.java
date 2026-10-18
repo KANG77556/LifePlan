@@ -15,6 +15,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.webkit.WebView;
 import android.widget.Toast;
@@ -48,6 +50,7 @@ public final class AppUpdater {
     private static final String P_VERSION = "pending_version";
     private static final String P_SHA = "expected_sha";
     private static final String P_FILE = "file_name";
+    private static final String P_INSTALL_OFFERED = "installer_offered";
 
     private final Activity activity;
     private final WebView web;
@@ -55,6 +58,14 @@ public final class AppUpdater {
     private final SharedPreferences prefs;
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final AtomicBoolean verifying = new AtomicBoolean(false);
+    private final Handler progressHandler = new Handler(Looper.getMainLooper());
+    private final Runnable pollProgress = new Runnable() {
+        @Override public void run() {
+            if (destroyed || !foreground) return;
+            if (prefs.getLong(P_ID, -1L) >= 0) inspectPending();
+            progressHandler.postDelayed(this, 3000);
+        }
+    };
     private boolean checking;
     private boolean foreground;
     private boolean registered;
@@ -106,6 +117,8 @@ public final class AppUpdater {
 
     public void onResume() {
         foreground = true;
+        progressHandler.removeCallbacks(pollProgress);
+        progressHandler.postDelayed(pollProgress, 3000);
         if (pendingAlreadyInstalled()) return;
         inspectPending();
     }
@@ -115,7 +128,7 @@ public final class AppUpdater {
         String target = prefs.getString(P_VERSION, "");
         if (id < 0 || target.isEmpty()) return false;
         try {
-            if (UpdateUtil.compareVersions(installedVersion(), target) >= 0) {
+            if (UpdateUtil.isPendingInstalled(installedVersion(), target)) {
                 clearPending(id);
                 status("업데이트 설치 완료. 최신 버전을 사용 중입니다.");
                 return true;
@@ -126,9 +139,11 @@ public final class AppUpdater {
 
     public void onPause() {
         foreground = false;
+        progressHandler.removeCallbacks(pollProgress);
     }
 
     public void onDestroy() {
+        progressHandler.removeCallbacks(pollProgress);
         destroyed = true;
         foreground = false;
         if (registered) activity.unregisterReceiver(completed);
@@ -159,7 +174,10 @@ public final class AppUpdater {
         if (destroyed || (automatic && !autoEnabled())) return;
         pendingAlreadyInstalled();
         if (prefs.getLong(P_ID, -1L) >= 0) {
-            if (!automatic) installerLaunched = false; // Manual retry if the person canceled installation.
+            if (!automatic) {
+                installerLaunched = false;
+                prefs.edit().putBoolean(P_INSTALL_OFFERED, false).apply(); // Explicit retry only.
+            }
             inspectPending();
             return;
         }
@@ -175,7 +193,9 @@ public final class AppUpdater {
                 activity.runOnUiThread(() -> {
                     if (destroyed) return;
                     checking = false;
-                    if (latest == null) {
+                    if (automatic && !autoEnabled()) {
+                        status("자동 업데이트가 꺼져 있어 다운로드를 시작하지 않았습니다.");
+                    } else if (latest == null) {
                         status("현재 최신 버전을 사용하고 있습니다.");
                     } else {
                         beginDownload(latest);
@@ -262,7 +282,8 @@ public final class AppUpdater {
             request.setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, fileName);
             long id = manager.enqueue(request);
             prefs.edit().putLong(P_ID, id).putString(P_VERSION, release.version)
-                .putString(P_SHA, release.sha).putString(P_FILE, fileName).apply();
+                .putString(P_SHA, release.sha).putString(P_FILE, fileName)
+                .putBoolean(P_INSTALL_OFFERED, false).apply();
             installerLaunched = false;
             permissionPageOpened = false;
             status("v" + release.version + " 다운로드 중… 완료되면 설치 화면을 자동으로 엽니다.");
@@ -276,7 +297,7 @@ public final class AppUpdater {
         final long id = prefs.getLong(P_ID, -1L);
         if (destroyed || id < 0 || !verifying.compareAndSet(false, true)) return;
         io.execute(() -> {
-            String result = null;
+            String downloadProgress = null;
             boolean ready = false;
             boolean failed = false;
             String version = prefs.getString(P_VERSION, "");
@@ -286,6 +307,14 @@ public final class AppUpdater {
                 try (Cursor c = manager.query(query)) {
                     if (c == null || !c.moveToFirst()) throw new IllegalStateException("Download no longer available");
                     state = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                    if (state == DownloadManager.STATUS_PENDING || state == DownloadManager.STATUS_RUNNING
+                            || state == DownloadManager.STATUS_PAUSED) {
+                        long current = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+                        long total = c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                        String amount = total > 0 ? (Math.min(100, Math.max(0, 100 * current / total)) + "%") : "진행 중";
+                        downloadProgress = "v" + version + " 다운로드 " + amount
+                            + (state == DownloadManager.STATUS_PAUSED ? " · 네트워크 대기 중" : "");
+                    }
                 }
                 if (state == DownloadManager.STATUS_FAILED) throw new IllegalStateException("Download failed");
                 if (state == DownloadManager.STATUS_SUCCESSFUL) {
@@ -305,6 +334,7 @@ public final class AppUpdater {
                 failed = true;
             }
             boolean ok = ready, error = failed;
+            String progress = downloadProgress;
             activity.runOnUiThread(() -> {
                 verifying.set(false);
                 if (destroyed || id != prefs.getLong(P_ID, -1L)) return;
@@ -312,8 +342,16 @@ public final class AppUpdater {
                     clearPending(id);
                     status("업데이트 파일 확인에 실패했습니다. 재시도하려면 '최신 버전 확인'을 누르세요.");
                 } else if (ok) {
-                    if (foreground && !installerLaunched) showInstaller(id, version);
-                    else if (!foreground) status("업데이트 다운로드 완료. 앱을 다시 열면 설치 화면을 표시합니다.");
+                    if (UpdateUtil.shouldAutoOpenInstaller(foreground,
+                            installerLaunched || prefs.getBoolean(P_INSTALL_OFFERED, false))) {
+                        showInstaller(id, version);
+                    } else if (!foreground) {
+                        status("업데이트 다운로드 완료. 앱을 다시 열면 설치 화면을 표시합니다.");
+                    } else if (prefs.getBoolean(P_INSTALL_OFFERED, false)) {
+                        status("v" + version + " APK 준비됨. 설치를 다시 진행하려면 최신 버전 확인을 누르세요.");
+                    }
+                } else if (progress != null) {
+                    status(progress);
                 }
             });
         });
@@ -386,15 +424,25 @@ public final class AppUpdater {
             installerLaunched = true;
             status("v" + version + " 설치 확인 화면을 열었습니다. Android의 '업데이트/설치'를 눌러 주세요.");
             activity.startActivity(install);
+            prefs.edit().putBoolean(P_INSTALL_OFFERED, true).apply();
         } catch (Exception e) {
             installerLaunched = false;
             status("설치 화면을 열지 못했습니다. 설정의 '최신 버전 확인'으로 다시 시도하세요.");
         }
     }
 
+    public void retryDownload() {
+        if (destroyed) return;
+        long id = prefs.getLong(P_ID, -1L);
+        if (id >= 0) clearPending(id);
+        status("기존 다운로드 상태를 초기화하고 새 버전을 확인합니다…");
+        checkForUpdates(false);
+    }
+
     private void clearPending(long id) {
         try { manager.remove(id); } catch (Exception ignored) {}
-        prefs.edit().remove(P_ID).remove(P_SHA).remove(P_VERSION).remove(P_FILE).apply();
+        prefs.edit().remove(P_ID).remove(P_SHA).remove(P_VERSION).remove(P_FILE)
+            .remove(P_INSTALL_OFFERED).apply();
         installerLaunched = false;
     }
 
