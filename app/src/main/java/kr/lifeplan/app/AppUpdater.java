@@ -61,6 +61,7 @@ public final class AppUpdater {
     private boolean destroyed;
     private boolean webReady;
     private boolean installerLaunched;
+    private boolean autoCheckedThisSession;
     private boolean permissionPageOpened;
     private String lastStatus = "자동 업데이트 준비됨";
 
@@ -125,7 +126,7 @@ public final class AppUpdater {
             + autoEnabled() + ");", null);
         status(lastStatus);
         inspectPending();
-        if (autoEnabled() && prefs.getLong(P_ID, -1L) < 0) checkForUpdates(true);
+        if (autoEnabled() && !autoCheckedThisSession && prefs.getLong(P_ID, -1L) < 0) { autoCheckedThisSession = true; checkForUpdates(true); }
     }
 
     public boolean autoEnabled() {
@@ -135,7 +136,7 @@ public final class AppUpdater {
     public void setAutoEnabled(boolean enabled) {
         prefs.edit().putBoolean(P_AUTO, enabled).apply();
         status(enabled ? "자동 업데이트가 켜졌습니다." : "자동 업데이트가 꺼졌습니다. 수동 확인은 계속 가능합니다.");
-        if (enabled && prefs.getLong(P_ID, -1L) < 0) checkForUpdates(true);
+        if (enabled && prefs.getLong(P_ID, -1L) < 0) { autoCheckedThisSession = true; checkForUpdates(true); }
     }
 
     public void checkForUpdates(boolean automatic) {
@@ -323,7 +324,7 @@ public final class AppUpdater {
         PackageInfo archive = pm.getPackageArchiveInfo(apk.getAbsolutePath(), flag);
         if (archive == null || !activity.getPackageName().equals(archive.packageName)
                 || !version.equals(archive.versionName)
-                || archive.getLongVersionCode() <= existing.getLongVersionCode()) {
+                || (Build.VERSION.SDK_INT >= 28 ? archive.getLongVersionCode() <= existing.getLongVersionCode() : archive.versionCode <= existing.versionCode)) {
             throw new SecurityException("APK package or version mismatch");
         }
         Signature[] current, candidate;
