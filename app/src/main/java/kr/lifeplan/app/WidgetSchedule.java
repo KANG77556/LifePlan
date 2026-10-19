@@ -28,15 +28,33 @@ public final class WidgetSchedule {
         String r=t.optString("repeat","all");int w=weekday(day);
         return "weekday".equals(r)?w>=1&&w<=5:("weekend".equals(r)?w==0||w==6:true);
     }
-    public static Summary summarize(List<JSONObject> all,Calendar now){
+    public static List<JSONObject> forDate(List<JSONObject> all,org.json.JSONObject specialPlans,Calendar day) {
+        String key=iso(day);
+        if(specialPlans!=null && specialPlans.has(key)) {
+            org.json.JSONObject p=specialPlans.optJSONObject(key);
+            ArrayList<JSONObject> dated=new ArrayList<>();
+            org.json.JSONArray rows=p==null?null:p.optJSONArray("tasks");
+            if(rows!=null)for(int j=0;j<rows.length();j++){
+                JSONObject task=rows.optJSONObject(j);
+                if(task!=null)dated.add(task);
+            }
+            return dated;
+        }
+        ArrayList<JSONObject> regular=new ArrayList<>();
+        for(JSONObject t:all)if(active(t,day))regular.add(t);
+        return regular;
+    }
+    public static Summary summarize(List<JSONObject> all,Calendar now) {
+        return summarize(all,null,now);
+    }
+    public static Summary summarize(List<JSONObject> all,org.json.JSONObject specialPlans,Calendar now){
         Summary out=new Summary();
         int current=now.get(Calendar.HOUR_OF_DAY)*60+now.get(Calendar.MINUTE);
         List<Slot> slots=new ArrayList<>();
         for(int offset=-1;offset<=1;offset++){
             Calendar day=(Calendar)now.clone();
             day.add(Calendar.DAY_OF_MONTH,offset);
-            for(JSONObject t:all){
-                if(!active(t,day))continue;
+            for(JSONObject t:forDate(all,specialPlans,day)){
                 int from=LifePlanDialRenderer.minute(t.optString("start","")),to=LifePlanDialRenderer.minute(t.optString("end",""));
                 int dur=LifePlanDialRenderer.duration(from,to);
                 if(dur==0)continue;
