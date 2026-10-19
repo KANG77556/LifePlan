@@ -24,6 +24,14 @@ public final class LifePlanWidget extends AppWidgetProvider {
     public static final String ACTION_REFRESH = "kr.lifeplan.app.WIDGET_REFRESH";
     public static final String ACTION_OPEN = "kr.lifeplan.app.WIDGET_OPEN";
 
+    public static class Dial extends AppWidgetProvider {
+        @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { LifePlanWidget.updateAll(c); }
+        @Override public void onReceive(Context c, Intent i) {
+            super.onReceive(c, i);
+            if (ACTION_REFRESH.equals(i.getAction()) || Intent.ACTION_DATE_CHANGED.equals(i.getAction())
+                    || Intent.ACTION_TIME_CHANGED.equals(i.getAction()) || Intent.ACTION_TIMEZONE_CHANGED.equals(i.getAction())) LifePlanWidget.updateAll(c);
+        }
+    }
     public static class Recurring extends AppWidgetProvider {
         @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { LifePlanWidget.updateAll(c); }
         @Override public void onReceive(Context c, Intent i) {
@@ -108,7 +116,8 @@ public final class LifePlanWidget extends AppWidgetProvider {
         AppWidgetManager m=AppWidgetManager.getInstance(c);
         int[] ids=m.getAppWidgetIds(new ComponentName(c,LifePlanWidget.class));
         int[] recurringIds=m.getAppWidgetIds(new ComponentName(c,Recurring.class));
-        if(ids.length==0 && recurringIds.length==0)return;
+        int[] dialIds=m.getAppWidgetIds(new ComponentName(c,Dial.class));
+        if(ids.length==0 && recurringIds.length==0 && dialIds.length==0)return;
         JSONObject data;
         try {data=new JSONObject(c.getSharedPreferences(PREFS,Context.MODE_PRIVATE).getString(SNAPSHOT,"{}"));}catch(Exception e){data=new JSONObject();}
         Calendar now=Calendar.getInstance();
@@ -128,6 +137,16 @@ public final class LifePlanWidget extends AppWidgetProvider {
             if(t!=null && due(t,now,today))dueItems.add(t);
         }
         String dateLabel=new SimpleDateFormat("M월 d일 EEEE",Locale.KOREAN).format(now.getTime());
+        if(dialIds.length>0) {
+            android.graphics.Bitmap dial=LifePlanDialRenderer.render(now,tasks);
+            for(int id:dialIds) {
+                RemoteViews v=new RemoteViews(c.getPackageName(),R.layout.widget_dial);
+                v.setTextViewText(R.id.widget_dial_count,"일정 "+tasks.size()+"개");
+                v.setImageViewBitmap(R.id.widget_dial_image,dial);
+                v.setOnClickPendingIntent(R.id.widget_dial_root,open(c,"daily",102));
+                m.updateAppWidget(id,v);
+            }
+        }
         for(int id:ids){
             RemoteViews v=new RemoteViews(c.getPackageName(),R.layout.widget_today);
             v.setTextViewText(R.id.widget_date,dateLabel);
