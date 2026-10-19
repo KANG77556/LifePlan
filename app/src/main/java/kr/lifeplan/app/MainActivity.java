@@ -23,9 +23,11 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> pendingFileSelection;
     private static final int REQUEST_BACKUP_FILE = 406;
     private AppUpdater updater;
+    private String pendingWidgetPage;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        if (getIntent()!=null && LifePlanWidget.ACTION_OPEN.equals(getIntent().getAction())) pendingWidgetPage=getIntent().getStringExtra("page");
         web = new WebView(this);
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -33,7 +35,7 @@ public class MainActivity extends Activity {
         settings.setDefaultTextEncodingName("UTF-8");
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
-                if (url.startsWith("file:///android_asset/")) updater.onWebReady();
+                if (url.startsWith("file:///android_asset/")) { updater.onWebReady(); openWidgetPage(); }
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 if (url.startsWith("https://")) {
@@ -64,6 +66,7 @@ public class MainActivity extends Activity {
             }
         });
         web.addJavascriptInterface(new Object() {
+            @JavascriptInterface public void syncWidgets(String json) { LifePlanWidget.sync(MainActivity.this, json); }
             @JavascriptInterface public void syncReminders(String json) { runOnUiThread(() -> ReminderReceiver.schedule(MainActivity.this,json)); }
             @JavascriptInterface public void requestReminderPermission() { runOnUiThread(() -> { if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 405); }); }
             @JavascriptInterface public void openInstaller(String url) { runOnUiThread(() -> updater.checkForUpdates(false)); }
@@ -96,6 +99,21 @@ public class MainActivity extends Activity {
         setContentView(root);
         if (Build.VERSION.SDK_INT >= 35) root.requestApplyInsets();
         web.loadUrl("file:///android_asset/index.html");
+    }
+
+    private void openWidgetPage() {
+        String page=pendingWidgetPage;
+        if (!"daily".equals(page) && !"recurring".equals(page)) return;
+        pendingWidgetPage=null;
+        if (web!=null) web.evaluateJavascript("window.goTo && window.goTo('"+page+"');", null);
+    }
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (LifePlanWidget.ACTION_OPEN.equals(intent.getAction())) {
+            pendingWidgetPage=intent.getStringExtra("page");
+            openWidgetPage();
+        }
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
