@@ -68,7 +68,7 @@ public final class AppUpdater {
     private boolean pendingNetworkRetry;
     private final Runnable retryReleaseCheck = () -> {
         pendingNetworkRetry = false;
-        if (!destroyed && foreground && autoEnabled()) checkForUpdates(true);
+        if (shouldRunNetworkRetry()) checkForUpdates(true);
     };
     private final Runnable pollProgress = new Runnable() {
         @Override public void run() {
@@ -124,6 +124,10 @@ public final class AppUpdater {
             activity.registerReceiver(completed, filter);
         }
         registered = true;
+    }
+
+    private boolean shouldRunNetworkRetry() {
+        return !destroyed && foreground && autoEnabled();
     }
 
     public void onResume() {
