@@ -1,20 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
  android:id="@+id/widget_dial_root" android:layout_width="match_parent" android:layout_height="match_parent"
- android:orientation="vertical" android:gravity="center_horizontal"
- android:background="@drawable/widget_background" android:padding="11dp">
+ android:orientation="vertical" android:background="@drawable/widget_background" android:padding="12dp">
  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-  <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-   android:text="24시간 생활계획표" android:textStyle="bold" android:textColor="#334563" android:textSize="14sp"
-   android:singleLine="true" android:ellipsize="end"/>
+  <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+   android:text="24시간 생활계획표" android:textSize="15sp" android:textColor="#253656" android:textStyle="bold"/>
   <TextView android:id="@+id/widget_dial_count" android:layout_width="wrap_content" android:layout_height="wrap_content"
-   android:text="오늘 일정" android:textColor="#5273E8" android:textSize="11sp" android:textStyle="bold"/>
+   android:text="일정 0개" android:textSize="12sp" android:textColor="#5474EC" android:textStyle="bold"/>
  </LinearLayout>
- <ImageView android:id="@+id/widget_dial_image"
-  android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
-  android:src="@drawable/lifeplan_icon" android:scaleType="fitCenter" android:adjustViewBounds="true"
-  android:contentDescription="0시부터 24시까지 원형 시간표" />
+ <TextView android:id="@+id/widget_dial_date" android:layout_width="match_parent" android:layout_height="wrap_content"
+  android:textSize="11sp" android:textColor="#8391AE" android:layout_marginTop="2dp"/>
+ <ImageView android:id="@+id/widget_dial_image" android:layout_width="match_parent"
+  android:layout_height="0dp" android:layout_weight="1" android:minHeight="92dp"
+  android:scaleType="fitCenter" android:src="@drawable/lifeplan_icon" android:contentDescription="오늘 원형 24시간 시간표"/>
+ <LinearLayout android:id="@+id/widget_dial_glance" android:layout_width="match_parent" android:layout_height="wrap_content"
+   android:orientation="horizontal" android:layout_marginTop="1dp">
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+   android:background="@drawable/widget_panel_blue" android:padding="8dp" android:layout_marginEnd="4dp" android:orientation="vertical">
+   <TextView android:text="지금" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="10sp" android:textColor="#526FC8"/>
+   <TextView android:id="@+id/widget_dial_current" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:singleLine="true" android:ellipsize="end" android:textStyle="bold" android:textSize="12sp" android:textColor="#26385A"/>
+   <TextView android:id="@+id/widget_dial_current_time" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:textSize="10sp" android:textColor="#657696"/>
+  </LinearLayout>
+  <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+   android:background="@drawable/widget_panel_warm" android:padding="8dp" android:layout_marginStart="4dp" android:orientation="vertical">
+   <TextView android:text="다음" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="10sp" android:textColor="#B67525"/>
+   <TextView android:id="@+id/widget_dial_next" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:singleLine="true" android:ellipsize="end" android:textStyle="bold" android:textSize="12sp" android:textColor="#26385A"/>
+   <TextView android:id="@+id/widget_dial_next_time" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:textSize="10sp" android:textColor="#657696"/>
+  </LinearLayout>
+ </LinearLayout>
+ <LinearLayout android:id="@+id/widget_dial_agenda" android:layout_width="match_parent" android:layout_height="wrap_content"
+  android:orientation="vertical" android:layout_marginTop="7dp" android:padding="7dp" android:background="@drawable/widget_panel_blue">
+  <TextView android:text="오늘 일정" android:textColor="#26385A" android:textStyle="bold"
+   android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp"/>
+  <TextView android:id="@+id/widget_dial_row1" android:layout_width="match_parent" android:layout_height="wrap_content"
+   android:maxLines="1" android:ellipsize="end" android:textColor="#354969" android:textSize="11sp" android:layout_marginTop="3dp"/>
+  <TextView android:id="@+id/widget_dial_row2" android:layout_width="match_parent" android:layout_height="wrap_content"
+   android:maxLines="1" android:ellipsize="end" android:textColor="#354969" android:textSize="11sp"/>
+  <TextView android:id="@+id/widget_dial_row3" android:layout_width="match_parent" android:layout_height="wrap_content"
+   android:maxLines="1" android:ellipsize="end" android:textColor="#354969" android:textSize="11sp"/>
+  <TextView android:id="@+id/widget_dial_row4" android:layout_width="match_parent" android:layout_height="wrap_content"
+   android:maxLines="1" android:ellipsize="end" android:textColor="#354969" android:textSize="11sp"/>
+ </LinearLayout>
  <TextView android:id="@+id/widget_dial_footer" android:layout_width="match_parent" android:layout_height="wrap_content"
-  android:text="탭하여 오늘 일정 열기" android:gravity="center" android:textSize="11sp"
-  android:textColor="#8391AE" android:singleLine="true" android:ellipsize="end"/>
+  android:text="탭하여 일정 열기" android:gravity="center" android:textColor="#8090AD" android:textSize="10sp"/>
 </LinearLayout>
