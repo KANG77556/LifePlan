@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:id="@+id/widget_recurring_root" android:layout_width="match_parent" android:layout_height="match_parent"
+ android:orientation="vertical" android:background="@drawable/widget_background" android:padding="13dp">
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="라이프플랜 · 반복관리" android:textColor="#4E6CE8" android:textStyle="bold" android:textSize="14sp" android:singleLine="true"/>
+ <TextView android:id="@+id/widget_recurring_date" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#8390A8" android:textSize="11sp" android:layout_marginTop="2dp"/>
+ <TextView android:id="@+id/widget_due_count" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0개 미완료" android:textColor="#243452" android:textSize="18sp" android:textStyle="bold" android:layout_marginTop="9dp"/>
+ <TextView android:id="@+id/widget_due1" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="#344562" android:textSize="12sp" android:layout_marginTop="6dp"/>
+ <TextView android:id="@+id/widget_due2" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="#344562" android:textSize="12sp" android:layout_marginTop="3dp"/>
+ <TextView android:id="@+id/widget_due3" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" android:ellipsize="end" android:textColor="#344562" android:textSize="12sp" android:layout_marginTop="3dp"/>
+</LinearLayout>
