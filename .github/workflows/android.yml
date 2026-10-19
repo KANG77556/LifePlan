@@ -108,7 +108,7 @@ jobs:
           import re
           gradle=Path('app/build.gradle').read_text()
           html=Path('app/src/main/assets/index.html').read_text()
-          match=re.search(r"versionName '([0-9]+\\.[0-9]+\\.[0-9]+)'", gradle)
+          match=re.search(r"versionName '([0-9]+[.][0-9]+[.][0-9]+)'", gradle)
           assert match, 'Missing valid versionName in gradle'
           assert 'v'+match.group(1) in html, 'UI version does not match Gradle version'
           print('Updater lifecycle wiring checks passed')
