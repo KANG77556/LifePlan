@@ -2,4 +2,5 @@
 <resources>
  <string name="widget_today_description">라이프플랜 오늘 일정</string>
  <string name="widget_recurring_description">라이프플랜 반복관리 미완료</string>
+ <string name="widget_dial_description">라이프플랜 원형 24시간 생활계획표</string>
 </resources>
