@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.webkit.WebView;
+import android.util.Log;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -27,6 +28,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -42,6 +44,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Android intentionally requires the person to confirm the final system install prompt.
  */
 public final class AppUpdater {
+    private static final String TAG = "LifePlanUpdater";
+    private static final int NETWORK_RETRY_DELAY_MS = 15000;
     private static final String RELEASES_API =
         "https://api.github.com/repos/KANG77556/LifePlan/releases?per_page=20";
     private static final String MIME_APK = "application/vnd.android.package-archive";
@@ -60,6 +64,12 @@ public final class AppUpdater {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final AtomicBoolean verifying = new AtomicBoolean(false);
     private final Handler progressHandler = new Handler(Looper.getMainLooper());
+    private int networkRetries;
+    private boolean pendingNetworkRetry;
+    private final Runnable retryReleaseCheck = () -> {
+        pendingNetworkRetry = false;
+        if (!destroyed && foreground && autoEnabled()) checkForUpdates(true);
+    };
     private final Runnable pollProgress = new Runnable() {
         @Override public void run() {
             if (destroyed || !foreground) return;
@@ -118,6 +128,10 @@ public final class AppUpdater {
 
     public void onResume() {
         foreground = true;
+        if (pendingNetworkRetry && autoEnabled()) {
+            progressHandler.removeCallbacks(retryReleaseCheck);
+            progressHandler.postDelayed(retryReleaseCheck, 2000);
+        }
         progressHandler.removeCallbacks(pollProgress);
         progressHandler.postDelayed(pollProgress, 3000);
         if (pendingAlreadyInstalled()) return;
@@ -140,10 +154,12 @@ public final class AppUpdater {
 
     public void onPause() {
         foreground = false;
+        progressHandler.removeCallbacks(retryReleaseCheck);
         progressHandler.removeCallbacks(pollProgress);
     }
 
     public void onDestroy() {
+        progressHandler.removeCallbacks(retryReleaseCheck);
         progressHandler.removeCallbacks(pollProgress);
         destroyed = true;
         foreground = false;
@@ -167,6 +183,11 @@ public final class AppUpdater {
 
     public void setAutoEnabled(boolean enabled) {
         prefs.edit().putBoolean(P_AUTO, enabled).apply();
+        if (!enabled) {
+            progressHandler.removeCallbacks(retryReleaseCheck);
+            pendingNetworkRetry = false;
+            networkRetries = 0;
+        }
         if (!enabled && prefs.getBoolean(P_AUTOMATIC_DOWNLOAD, false)) {
             long pending = prefs.getLong(P_ID, -1L);
             if (pending >= 0) clearPending(pending);
@@ -203,16 +224,33 @@ public final class AppUpdater {
                     if (automatic && !autoEnabled()) {
                         status("자동 업데이트가 꺼져 있어 다운로드를 시작하지 않았습니다.");
                     } else if (latest == null) {
+                        networkRetries = 0;
+                        pendingNetworkRetry = false;
                         status("현재 최신 버전을 사용하고 있습니다.");
+                        Log.i(TAG, "Release check: already current");
                     } else {
+                        networkRetries = 0;
+                        pendingNetworkRetry = false;
+                        Log.i(TAG, "Release check: update available v" + latest.version);
                         beginDownload(latest, automatic);
                     }
                 });
             } catch (Exception error) {
+                Log.w(TAG, "Release check failed (auto=" + automatic + ")", error);
                 activity.runOnUiThread(() -> {
                     if (destroyed) return;
                     checking = false;
-                    status("업데이트 확인에 실패했습니다. 인터넷 연결을 확인한 후 다시 시도하세요.");
+                    if (automatic && autoEnabled() && error instanceof IOException
+                            && networkRetries < 1) {
+                        networkRetries++;
+                        pendingNetworkRetry = true;
+                        status("네트워크 연결이 불안정하여 15초 후 한 번 더 확인합니다.");
+                        progressHandler.removeCallbacks(retryReleaseCheck);
+                        if (foreground) progressHandler.postDelayed(retryReleaseCheck, NETWORK_RETRY_DELAY_MS);
+                    } else {
+                        pendingNetworkRetry = false;
+                        status("업데이트 확인에 실패했습니다. 인터넷 연결을 확인한 후 다시 시도하세요.");
+                    }
                 });
             }
         });
@@ -225,7 +263,9 @@ public final class AppUpdater {
         c.setRequestProperty("User-Agent", "LifePlan-Android-Updater");
         c.setRequestProperty("Accept", "application/vnd.github+json");
         try {
-            if (c.getResponseCode() != 200) throw new IllegalStateException("GitHub API " + c.getResponseCode());
+            int code = c.getResponseCode();
+            if (code >= 500) throw new IOException("GitHub API temporarily unavailable: HTTP " + code);
+            if (code != 200) throw new IllegalStateException("GitHub API HTTP " + code);
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             try (InputStream in = c.getInputStream()) {
                 byte[] buf = new byte[8192];
@@ -288,6 +328,7 @@ public final class AppUpdater {
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             request.setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, fileName);
             long id = manager.enqueue(request);
+            Log.i(TAG, "Download queued v" + release.version + " id=" + id);
             prefs.edit().putLong(P_ID, id).putString(P_VERSION, release.version)
                 .putString(P_SHA, release.sha).putString(P_FILE, fileName)
                 .putBoolean(P_INSTALL_OFFERED, false)
@@ -324,7 +365,14 @@ public final class AppUpdater {
                             + (state == DownloadManager.STATUS_PAUSED ? " · 네트워크 대기 중" : "");
                     }
                 }
-                if (state == DownloadManager.STATUS_FAILED) throw new IllegalStateException("Download failed");
+                if (state == DownloadManager.STATUS_FAILED) {
+                    int reason;
+                    try (Cursor c = manager.query(query)) {
+                        reason = c != null && c.moveToFirst()
+                            ? c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)) : -1;
+                    }
+                    throw new IOException("DownloadManager failed: reason=" + reason);
+                }
                 if (state == DownloadManager.STATUS_SUCCESSFUL) {
                     Uri uri = manager.getUriForDownloadedFile(id);
                     if (uri == null) throw new IllegalStateException("Downloaded APK not available");
@@ -336,9 +384,11 @@ public final class AppUpdater {
                     if (folder == null) throw new IllegalStateException("Download folder unavailable");
                     File apk = new File(folder, prefs.getString(P_FILE, ""));
                     verifyApkSignature(apk, version);
+                    Log.i(TAG, "APK digest, package version and signing certificate verified v" + version);
                     ready = true;
                 }
             } catch (Exception e) {
+                Log.e(TAG, "Downloaded update verification failed id=" + id, e);
                 failed = true;
             }
             boolean ok = ready, error = failed;
@@ -432,8 +482,10 @@ public final class AppUpdater {
             installerLaunched = true;
             status("v" + version + " 설치 확인 화면을 열었습니다. Android의 '업데이트/설치'를 눌러 주세요.");
             activity.startActivity(install);
+            Log.i(TAG, "Android package installer opened v" + version);
             prefs.edit().putBoolean(P_INSTALL_OFFERED, true).apply();
         } catch (Exception e) {
+            Log.e(TAG, "Failed to open Android package installer", e);
             installerLaunched = false;
             status("설치 화면을 열지 못했습니다. 설정의 '최신 버전 확인'으로 다시 시도하세요.");
         }
