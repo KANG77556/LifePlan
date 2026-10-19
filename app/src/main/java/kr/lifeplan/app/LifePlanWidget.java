@@ -26,6 +26,7 @@ public final class LifePlanWidget extends AppWidgetProvider {
 
     public static class Dial extends AppWidgetProvider {
         @Override public void onUpdate(Context c, AppWidgetManager m, int[] ids) { LifePlanWidget.updateAll(c); }
+        @Override public void onAppWidgetOptionsChanged(Context c, AppWidgetManager m, int id, android.os.Bundle opts) { LifePlanWidget.updateAll(c); }
         @Override public void onReceive(Context c, Intent i) {
             super.onReceive(c, i);
             if (ACTION_REFRESH.equals(i.getAction()) || Intent.ACTION_DATE_CHANGED.equals(i.getAction())
@@ -138,11 +139,33 @@ public final class LifePlanWidget extends AppWidgetProvider {
         }
         String dateLabel=new SimpleDateFormat("M월 d일 EEEE",Locale.KOREAN).format(now.getTime());
         if(dialIds.length>0) {
+            ArrayList<JSONObject> allTasks=new ArrayList<>();
+            if(source!=null)for(int i=0;i<source.length();i++) {
+                JSONObject item=source.optJSONObject(i);
+                if(item!=null)allTasks.add(item);
+            }
+            WidgetSchedule.Summary summary=WidgetSchedule.summarize(allTasks,now);
             android.graphics.Bitmap dial=LifePlanDialRenderer.render(now,tasks);
             for(int id:dialIds) {
                 RemoteViews v=new RemoteViews(c.getPackageName(),R.layout.widget_dial);
                 v.setTextViewText(R.id.widget_dial_count,"일정 "+tasks.size()+"개");
+                v.setTextViewText(R.id.widget_dial_date,dateLabel);
                 v.setImageViewBitmap(R.id.widget_dial_image,dial);
+                v.setTextViewText(R.id.widget_dial_current,summary.current==null?"현재 일정 없음":summary.current.task.optString("name"));
+                v.setTextViewText(R.id.widget_dial_current_time,summary.current==null?"":summary.current.task.optString("start")+"–"+summary.current.task.optString("end"));
+                v.setTextViewText(R.id.widget_dial_next,summary.next==null?"다음 일정 없음":summary.next.task.optString("name"));
+                v.setTextViewText(R.id.widget_dial_next_time,summary.next==null?"":summary.next.task.optString("start")+"–"+summary.next.task.optString("end"));
+                int[] rows={R.id.widget_dial_row1,R.id.widget_dial_row2,R.id.widget_dial_row3,R.id.widget_dial_row4};
+                for(int row=0;row<rows.length;row++) {
+                    if(row<summary.today.size()) {
+                        JSONObject t=summary.today.get(row);
+                        v.setTextViewText(rows[row],t.optString("name")+"   "+t.optString("start")+"–"+t.optString("end"));
+                    } else v.setTextViewText(rows[row],row==0?"오늘 일정 없음":"");
+                }
+                if(summary.today.size()>4)v.setTextViewText(R.id.widget_dial_footer,"외 "+(summary.today.size()-4)+"개 · 탭하여 일정 열기");
+                int h=m.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,0);
+                if(h==0)h=m.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,0);
+                v.setViewVisibility(R.id.widget_dial_agenda,h>=310?android.view.View.VISIBLE:android.view.View.GONE);
                 v.setOnClickPendingIntent(R.id.widget_dial_root,open(c,"daily",102));
                 m.updateAppWidget(id,v);
             }
