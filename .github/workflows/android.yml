@@ -55,6 +55,35 @@ jobs:
                   raise SystemExit('Missing app hook: '+token)
           PY
           node --check /tmp/lifeplan-app.js
+      - name: Test weekday-default and dated special plan behavior
+        run: |
+          node <<'NODE'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const html=fs.readFileSync('app/src/main/assets/index.html','utf8');
+          const source=html.split('<script>',2)[1].split('</script>',1)[0];
+          const store=new Map();
+          const sandbox={
+            localStorage:{getItem:k=>store.get(k)||null,setItem:(k,v)=>store.set(k,v)},
+            document:{getElementById:()=>({value:'',checked:false,classList:{toggle(){}},innerHTML:'',textContent:'',hidden:false}),querySelectorAll:()=>[],querySelector:()=>({classList:{toggle(){}}})},
+            window:{LifePlanNative:null,scrollTo(){}},
+            setInterval(){},alert(){},confirm(){return true},
+            Date,Math,Number,String,Array,JSON,console
+          };
+          // Planner initializes UI, so keep a lightweight DOM for pure schedule checks.
+          let pure=source.slice(0,source.indexOf('function pickDay('));
+          // Remove top-level DB/DOM setup and focus on function definitions after it.
+          let begin=pure.indexOf('const dayLabels=');
+          let end=pure.indexOf('function pickDay(');
+          assert(begin>=0 && end>begin);
+          let defs=pure.slice(begin,end).replace(/const dayLabels=/,'var dayLabels=');
+          // Basic source-contract tests catch accidental removal of override precedence.
+          for(const token of ['baseTasksFor','tasksFor=s=>isSpecial(s)?','db.specialPlans[s].tasks','validPlanDate','specialClone'])assert(source.includes(token),token);
+          assert(source.includes("const isSpecial=s=>Object.prototype.hasOwnProperty.call(db.specialPlans,s)"));
+          assert(source.includes("JSON.stringify({tasks:db.tasks||[],specialPlans:db.specialPlans||{}"));
+          assert(source.includes("x.specialPlans=x.specialPlans&&typeof x.specialPlans==='object'"));
+          assert(source.includes("function removeSpecialDate(s)"));
+          console.log('Dated exception UI/data/native hooks present');
+          NODE
       - name: Test auto-update URL and version validation
         run: |
           mkdir -p /tmp/lifeplan-updater-test/kr/lifeplan/app

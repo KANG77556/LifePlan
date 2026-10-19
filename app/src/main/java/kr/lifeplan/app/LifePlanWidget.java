@@ -126,9 +126,14 @@ public final class LifePlanWidget extends AppWidgetProvider {
         int weekday=now.get(Calendar.DAY_OF_WEEK)-1,minute=now.get(Calendar.HOUR_OF_DAY)*60+now.get(Calendar.MINUTE);
         ArrayList<JSONObject> tasks=new ArrayList<>();
         JSONArray source=data.optJSONArray("tasks");
+        org.json.JSONObject specials=data.optJSONObject("specialPlans");
+        ArrayList<JSONObject> allTasks=new ArrayList<>();
         if(source!=null)for(int i=0;i<source.length();i++){
             JSONObject t=source.optJSONObject(i);
-            if(t!=null && active(t,weekday,today) && !t.optString("start").equals(t.optString("end")))tasks.add(t);
+            if(t!=null)allTasks.add(t);
+        }
+        for(JSONObject t:WidgetSchedule.forDate(allTasks,specials,now)){
+            if(!t.optString("start").equals(t.optString("end")))tasks.add(t);
         }
         Collections.sort(tasks,Comparator.comparing(t->t.optString("start","99:99")));
         ArrayList<JSONObject> dueItems=new ArrayList<>();
@@ -139,12 +144,7 @@ public final class LifePlanWidget extends AppWidgetProvider {
         }
         String dateLabel=new SimpleDateFormat("M월 d일 EEEE",Locale.KOREAN).format(now.getTime());
         if(dialIds.length>0) {
-            ArrayList<JSONObject> allTasks=new ArrayList<>();
-            if(source!=null)for(int i=0;i<source.length();i++) {
-                JSONObject item=source.optJSONObject(i);
-                if(item!=null)allTasks.add(item);
-            }
-            WidgetSchedule.Summary summary=WidgetSchedule.summarize(allTasks,now);
+            WidgetSchedule.Summary summary=WidgetSchedule.summarize(allTasks,specials,now);
             android.graphics.Bitmap dial=LifePlanDialRenderer.render(now,tasks);
             for(int id:dialIds) {
                 RemoteViews v=new RemoteViews(c.getPackageName(),R.layout.widget_dial);
