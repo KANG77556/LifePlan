@@ -80,7 +80,7 @@ header.hero.compact::after{display:none}
 body:has(header.hero.compact) .wrap{padding-top:12px}
 @media(max-width:370px){header.hero.compact .hero-main h1{font-size:21px}}
 
-/* v0.5.5 compact overview + functional secondary screens */
+/* v0.5.6 compact overview + functional secondary screens */
 header.hero:not(.compact){padding:15px 15px 13px;border-radius:0 0 25px 25px}
 header.hero:not(.compact) .hero-main h1{font-size:27px;margin:4px 0 4px}
 header.hero:not(.compact) .hero-main .hero-date{font-size:13px}
@@ -177,7 +177,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 .diary-history-row .diary-history-text{display:block;color:#334967;line-height:1.5;font-size:13px;overflow-wrap:anywhere}
 
 
-/* v0.5.5 monthly overview: tap dates to open weekday/exception plan. */
+/* v0.5.6 monthly overview: tap dates to open weekday/exception plan. */
 .month-calendar{padding:15px 12px;border:1px solid #e2eafb;border-radius:18px;background:linear-gradient(150deg,#fff,#f9faff)}
 .month-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .month-head h3{font-size:18px;margin:0}
@@ -206,7 +206,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 
 .mood-picker{margin-top:10px;color:#586b8d;font-size:12px;font-weight:700}.mood-picker #diaryMoodOptions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.mood-option{border:1px solid #e3e8f3;border-radius:11px;background:#f7f8fc;padding:7px 5px;flex:1;min-width:47px;display:flex;align-items:center;flex-direction:column;gap:4px;color:#53647e}.mood-option span{font-size:22px}.mood-option small{font-size:10px}.mood-option.picked{background:#e4ebff;border-color:#5f7ce6}.month-review{margin-top:18px;border-top:1px solid #e5e9f5;padding-top:12px}.month-review-controls{display:flex;gap:9px;align-items:center;justify-content:space-between}.mood-stat{display:flex;justify-content:space-between;padding:6px 3px;border-bottom:1px solid #f0f1f7}.month-review textarea{width:100%;min-height:88px;margin-top:12px}
 </style></head><body><header class="hero"><div class="hero-inner">
-<div class="hero-top"><span id="greeting" class="hero-kicker">나의 하루, 나의 미래</span><span class="hero-version">v0.5.5</span></div>
+<div class="hero-top"><span id="greeting" class="hero-kicker">나의 하루, 나의 미래</span><span class="hero-version">v0.5.6</span></div>
 <div class="hero-main"><div><h1>라이프플랜</h1><p class="hero-date" id="today"></p></div><span class="hero-symbol" id="heroSymbol" aria-hidden="true">☀</span></div>
 <div class="hero-stats" aria-label="오늘의 요약">
 <button class="hero-stat" type="button" onclick="goTo('daily','dailyTasks')"><span>오늘 일정</span><strong id="heroTaskCount">-</strong></button>
@@ -267,7 +267,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 <section class="page secondary-page" id="recurring"><div class="card"><div class="flex"><h3>반복 생활관리</h3><button class="btn" onclick="editRecurring()">+ 등록</button></div><p class="section-note">주기적으로 해야 할 일을 자동으로 알려줍니다.</p><div id="recurringSummary" class="secondary-summary"></div><div class="preset-row" aria-label="생활관리 빠른 등록"><button type="button" onclick="addRecurringPreset('nails')">+ 손톱 깎기 · 매주</button><button type="button" onclick="addRecurringPreset('bedding')">+ 침구 세탁 · 격주</button><button type="button" onclick="addRecurringPreset('hair')">+ 이발 · 30일</button></div><button class="soft" type="button" onclick="window.LifePlanNative?.requestReminderPermission?.()">알림 권한 허용</button><div id="recurringList"></div></div></section>
 <section class="page secondary-page" id="goals"><div class="card"><div class="flex"><h3>인생 목표</h3><button class="btn" onclick="editGoal()">+ 목표</button></div><div id="goalSummary" class="secondary-summary"></div><div id="goallist"></div></div></section>
 <section class="page secondary-page" id="habits"><div class="card"><div class="flex"><h3>습관 체크</h3><button class="btn" onclick="editHabit()">+ 습관</button></div><div id="habitSummary" class="secondary-summary"></div><div id="habitlist"></div></div></section>
-<section class="page secondary-page" id="settings"><div class="card"><h3>앱 정보와 업데이트</h3><div class="secondary-summary">설치 버전: <strong>v0.5.5</strong> · 기존 데이터 유지</div><label style="display:flex;align-items:center;gap:12px;margin:15px 0;color:#344562"><input type="checkbox" id="autoUpdate" style="width:23px;height:23px" checked onchange="setAutoUpdate(this.checked)"><span>자동 업데이트 확인·다운로드</span></label><p class="section-note">새 버전은 자동으로 내려받고 설치 확인 화면을 엽니다. 최종 설치는 Android에서 한 번 승인해야 합니다.</p><button class="btn" type="button" onclick="update()">최신 버전 확인 및 설치</button> <button class="soft" type="button" onclick="retryUpdateDownload()">다운로드 초기화·재시도</button><p id="updateStatus" class="section-note" role="status" aria-live="polite"></p></div><div class="card"><h3>생활계획표 일정 알림</h3>
+<section class="page secondary-page" id="settings"><div class="card"><h3>앱 정보와 업데이트</h3><div class="secondary-summary">설치 버전: <strong>v0.5.6</strong> · 기존 데이터 유지</div><label style="display:flex;align-items:center;gap:12px;margin:15px 0;color:#344562"><input type="checkbox" id="autoUpdate" style="width:23px;height:23px" checked onchange="setAutoUpdate(this.checked)"><span>자동 업데이트 확인·다운로드</span></label><p class="section-note">새 버전은 자동으로 내려받고 설치 확인 화면을 엽니다. 최종 설치는 Android에서 한 번 승인해야 합니다.</p><button class="btn" type="button" onclick="update()">최신 버전 확인 및 설치</button> <button class="soft" type="button" onclick="retryUpdateDownload()">다운로드 초기화·재시도</button><p id="updateStatus" class="section-note" role="status" aria-live="polite"></p></div><div class="card"><h3>생활계획표 일정 알림</h3>
  <p class="section-note">요일별 기본 계획과 특별 날짜 계획을 기준으로 일정 시작 전에 알립니다. Android 배터리 최적화에 따라 알림 시간이 약간 늦어질 수 있습니다.</p>
  <label for="scheduleLead">일정 시작 전 알림 시점</label>
  <select id="scheduleLead" onchange="setScheduleLead(this.value)">
@@ -287,7 +287,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
  <select id="vaultBackupSelect" aria-label="최근 자동 백업"><option value="">백업 확인 중</option></select>
  <div class="settings-actions"><button class="soft" type="button" onclick="refreshVaultList()">백업 목록 새로고침</button><button class="btn" type="button" onclick="restoreVault()">선택 백업 복원</button></div>
  <p class="section-note">복원 전에 현재 데이터도 암호화 백업으로 보관합니다. 휴대전화 변경이나 앱 삭제에 대비하려면 아래 JSON 내보내기도 이용하세요.</p>
-</div><div class="card"><h3>데이터 백업·복원</h3><div id="dataSummary" class="secondary-summary"></div><p class="section-note">앱을 삭제하면 일정이 사라질 수 있습니다. 삭제하거나 기기를 바꾸기 전 백업하세요.</p><div class="settings-actions"><button class="btn" type="button" onclick="backup()">JSON 파일로 백업</button><button class="soft" type="button" onclick="startRestore()">백업 파일 복원</button></div><p class="section-note">복원 시 현재 데이터가 교체됩니다. 복원 전에 백업을 만들어 주세요.</p><input hidden id="upload" type="file" accept="application/json,.json" onchange="restore(this)"></div></section></div>
+</div><div class="card"><h3>외부 암호화 백업</h3><p class="section-note">Google Drive 등 파일 제공자를 선택해 비밀번호로 암호화된 백업을 저장합니다. 비밀번호는 10자 이상이며 잊으면 복원할 수 없습니다. 저장 위치를 연결하면 일정 수정 시 해당 백업 파일을 갱신합니다. 파일 제공자에 따라 동기화가 지연될 수 있습니다.</p><div id="portableBackupStatus" class="secondary-summary">외부 백업 확인 중</div><div class="settings-actions"><button class="btn" onclick="window.LifePlanNative?.choosePortableBackup?.(JSON.stringify(db))">저장 위치·비밀번호 설정</button><button class="soft" onclick="restorePortableBackup()">외부 백업 복원</button></div></div><div class="card"><h3>데이터 백업·복원</h3><div id="dataSummary" class="secondary-summary"></div><p class="section-note">앱을 삭제하면 일정이 사라질 수 있습니다. 삭제하거나 기기를 바꾸기 전 백업하세요.</p><div class="settings-actions"><button class="btn" type="button" onclick="backup()">JSON 파일로 백업</button><button class="soft" type="button" onclick="startRestore()">백업 파일 복원</button></div><p class="section-note">복원 시 현재 데이터가 교체됩니다. 복원 전에 백업을 만들어 주세요.</p><input hidden id="upload" type="file" accept="application/json,.json" onchange="restore(this)"></div></section></div>
 <nav aria-label="하단 메뉴"><button class="on" data-page="daily" onclick="tab('daily',this)"><span class="nav-icon" aria-hidden="true">◷</span>오늘</button><button data-page="weekly" onclick="tab('weekly',this)"><span class="nav-icon" aria-hidden="true">▦</span>주간</button><button data-page="recurring" onclick="tab('recurring',this)"><span class="nav-icon" aria-hidden="true">↻</span>반복관리</button><button data-page="goals" onclick="tab('goals',this)"><span class="nav-icon" aria-hidden="true">◎</span>목표</button><button data-page="habits" onclick="tab('habits',this)"><span class="nav-icon" aria-hidden="true">✓</span>습관</button><button data-page="settings" onclick="tab('settings',this)"><span class="nav-icon" aria-hidden="true">⚙</span>설정</button></nav>
 <dialog id="taskDialog"><h3 id="taskDialogTitle">일정 편집</h3><p id="taskScopeHint" class="section-note"></p><input id="tid" type="hidden"><label>활동명</label><input id="tname" maxlength="30" placeholder="예: 운동"><label>시작</label><input id="start" type="time"><label>종료</label><input id="end" type="time"><label>활동 색상</label><input id="color" type="color"><div id="weeklyEditFields"><label>요일별 반복 설정</label><div class="flex"><button class="soft" type="button" onclick="quickDays([0,1,2,3,4,5,6])">매일</button><button class="soft" type="button" onclick="quickDays([1,2,3,4,5])">평일</button><button class="soft" type="button" onclick="quickDays([0,6])">주말</button></div><div id="weekdaybox" class="weekdaybox"></div><label><input id="once" type="checkbox" style="width:auto"> 선택 날짜만 (반복하지 않음)</label></div><div class="actions"><button class="soft" id="deleteTask" onclick="removeTask()">삭제</button><button class="soft" onclick="taskDialog.close()">취소</button><button class="btn" onclick="saveTask()">저장</button></div></dialog>
 <dialog id="specialDialog"><h3 id="specialDialogTitle">특별 날짜 계획 만들기</h3>
@@ -589,6 +589,9 @@ window.LifePlanVaultRestored=function(raw){
   window.LifePlanVaultStatus('복원 데이터에 오류가 있습니다. 기존 데이터는 유지했습니다.');
  }
 };
+window.LifePlanExternalBackupStatus=function(status){const el=$('portableBackupStatus');if(el)el.textContent=String(status)};
+function restorePortableBackup(){if(!window.LifePlanNative?.restorePortableBackup){alert('Android 앱에서 이용하세요.');return}if(!confirm('외부 백업 파일을 선택하고 복원할까요? 현재 데이터는 내부 자동 백업에 보관됩니다.'))return;window.LifePlanNative.restorePortableBackup(JSON.stringify(db))}
+window.LifePlanPortableRestored=function(raw){try{let incoming=normalizeRestoredData(JSON.parse(raw));if(!confirm('외부 백업으로 현재 데이터를 교체할까요?'))return;db=incoming;diaryDirty=false;save();alert('외부 백업을 복원했습니다.')}catch(e){alert('백업 데이터가 유효하지 않습니다.')}};
 function versionParts(v){return String(v).replace(/^v/,'').split('-')[0].split('.').map(x=>Number(x)||0)}
 function compareVersions(a,b){let x=versionParts(a),y=versionParts(b);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)-(y[i]||0)}return 0}
 function setAutoUpdate(checked){if(window.LifePlanNative?.setAutoUpdate)window.LifePlanNative.setAutoUpdate(Boolean(checked))}
