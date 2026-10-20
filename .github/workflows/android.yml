@@ -55,6 +55,61 @@ jobs:
                   raise SystemExit('Missing app hook: '+token)
           PY
           node --check /tmp/lifeplan-app.js
+      - name: Test PIN protection and encrypted backup retention rules
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lifeplan-security/kr/lifeplan/app
+          cp app/src/main/java/kr/lifeplan/app/PinHash.java /tmp/lifeplan-security/kr/lifeplan/app/
+          cp app/src/main/java/kr/lifeplan/app/VaultRules.java /tmp/lifeplan-security/kr/lifeplan/app/
+          cat > /tmp/lifeplan-security/SecurityTest.java <<'JAVA'
+          import java.util.Arrays;
+          import kr.lifeplan.app.PinHash;
+          import kr.lifeplan.app.VaultRules;
+          public class SecurityTest {
+            static void check(boolean condition) { if (!condition) throw new AssertionError(); }
+            public static void main(String[] args) throws Exception {
+              check(!PinHash.valid("123") && !PinHash.valid("123456789"));
+              check(!PinHash.valid("a1234") && PinHash.valid("1234"));
+              String pin=PinHash.create("841729");
+              check(!pin.contains("841729"));
+              check(PinHash.verify(pin,"841729") && !PinHash.verify(pin,"111111"));
+              check(!PinHash.verify("invalid","1234"));
+              check(!PinHash.create("841729").equals(pin)); // randomized salt
+              check(VaultRules.trustedName("backup-1792497600000.lpb"));
+              check(!VaultRules.trustedName("../backup-1792497600000.lpb"));
+              check(!VaultRules.trustedName("backup-1792497600000.lpb.tmp"));
+              check(VaultRules.timestamp("backup-1792497600000.lpb")==1792497600000L);
+              check(VaultRules.preferredName(Arrays.asList("backup-1792497600000.lpb"),1792497601000L,false).equals("backup-1792497600000.lpb"));
+              check(VaultRules.preferredName(Arrays.asList("backup-1792497600000.lpb"),1792497601000L,true).equals("backup-1792497601000.lpb"));
+              check(VaultRules.preferredName(Arrays.asList("backup-1792497600000.lpb"),1792499000000L,false).equals("backup-1792499000000.lpb"));
+              check(VaultRules.KEEP==7);
+              System.out.println("PIN hashing, rate-safe validation and rolling backup rules passed");
+            }
+          }
+          JAVA
+          javac -d /tmp/lifeplan-security /tmp/lifeplan-security/kr/lifeplan/app/*.java /tmp/lifeplan-security/SecurityTest.java
+          java -cp /tmp/lifeplan-security SecurityTest
+      - name: Check native privacy and backup wiring
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest=Path('app/src/main/AndroidManifest.xml').read_text()
+          activity=Path('app/src/main/java/kr/lifeplan/app/MainActivity.java').read_text()
+          vault=Path('app/src/main/java/kr/lifeplan/app/BackupVault.java').read_text()
+          lock=Path('app/src/main/java/kr/lifeplan/app/PrivacyLock.java').read_text()
+          html=Path('app/src/main/assets/index.html').read_text()
+          assert 'android:allowBackup="false"' in manifest
+          assert 'android:fullBackupContent="false"' in manifest
+          for token in ['autoBackup(String json)','restoreEncryptedBackup(String name,String currentJson)','externalOrBlock(String url)','privacyLock.onPause()','backupVault.close()']:
+              assert token in activity,token
+          for token in ['AES/GCM/NoPadding','AndroidKeyStore','getNoBackupFilesDir','getFD().sync()','VaultRules.KEEP']:
+              assert token in vault,token
+          for token in ['FLAG_SECURE','PinHash.verify','lockDialog.setCancelable(false)']:
+              assert token in lock,token
+          for token in ['id="vaultBackupSelect"','id="privacyStatus"','window.LifePlanVaultRestored','LifePlanNative?.autoBackup','function restoreVault()']:
+              assert token in html,token
+          print('Native vault, PIN gate, no cloud plaintext backup and JS integration are connected')
+          PY
       - name: Test dated diary and monthly mood insights
         run: |
           node <<'NODE'
