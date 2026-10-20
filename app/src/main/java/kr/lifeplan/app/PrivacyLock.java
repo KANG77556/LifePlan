@@ -153,7 +153,11 @@ public final class PrivacyLock {
     }
     private void showUnlock(){
         if(!enabled()||unlocked||activity.isFinishing()||lockDialog!=null)return;
-        if(throttled())return;
+        if(throttled()){
+            long remaining=Math.max(1000L,preferences.getLong(UNTIL,0L)-System.currentTimeMillis()+300L);
+            web.postDelayed(this::showUnlock,remaining);
+            return;
+        }
         EditText field=pinInput();
         lockDialog=new AlertDialog.Builder(activity).setTitle("라이프플랜 잠금")
             .setMessage("개인 기록을 보려면 PIN을 입력하세요.")
