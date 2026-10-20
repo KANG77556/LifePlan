@@ -55,6 +55,29 @@ jobs:
                   raise SystemExit('Missing app hook: '+token)
           PY
           node --check /tmp/lifeplan-app.js
+      - name: Test dated execution analytics
+        run: |
+          node <<'NODE'
+          const assert=require('assert');
+          const A=require('./app/src/main/assets/execution-analytics.js');
+          assert(A.parseDay('2026-02-29')===null);
+          assert(A.parseDay('2024-02-29')!==null);
+          assert(A.addDay('2026-12-31',1)==='2027-01-01');
+          assert(A.weekDays('2026-10-20')[0]==='2026-10-19');
+          const monday=[{id:1,name:'업무',start:'09:00',end:'10:00'}];
+          let record=A.snapshot(monday,'2026-10-19','timestamp');
+          assert(A.dayStats(record).rate===0);
+          record=A.setChecked(record,1,true,'2026-10-19T10:00:00Z');
+          assert(A.dayStats(record).rate===100);
+          record=A.reconcile(record,[{id:1,name:'업무 변경',start:'09:00',end:'10:00'},{id:2,name:'운동',start:'11:00',end:'12:00'}]);
+          assert(A.dayStats(record).rate===50);
+          const log=A.normalizeLog({'2026-10-19':record,'not-a-date':record});
+          assert(Object.keys(log).length===1);
+          const week=A.periodStats(log,A.weekDays('2026-10-20'),'2026-10-20');
+          assert(week.trackedDays===1 && week.done===1 && week.total===2 && week.rate===50);
+          assert(A.periodStats({},A.weekDays('2026-10-20'),'2026-10-20').rate===null);
+          console.log('Date-keyed execution stats tests passed');
+          NODE
       - name: Test weekday-default and dated special plan behavior
         run: |
           node <<'NODE'
