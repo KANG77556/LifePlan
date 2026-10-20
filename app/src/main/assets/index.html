@@ -80,7 +80,7 @@ header.hero.compact::after{display:none}
 body:has(header.hero.compact) .wrap{padding-top:12px}
 @media(max-width:370px){header.hero.compact .hero-main h1{font-size:21px}}
 
-/* v0.5.2 compact overview + functional secondary screens */
+/* v0.5.3 compact overview + functional secondary screens */
 header.hero:not(.compact){padding:15px 15px 13px;border-radius:0 0 25px 25px}
 header.hero:not(.compact) .hero-main h1{font-size:27px;margin:4px 0 4px}
 header.hero:not(.compact) .hero-main .hero-date{font-size:13px}
@@ -177,7 +177,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 .diary-history-row .diary-history-text{display:block;color:#334967;line-height:1.5;font-size:13px;overflow-wrap:anywhere}
 
 
-/* v0.5.2 monthly overview: tap dates to open weekday/exception plan. */
+/* v0.5.3 monthly overview: tap dates to open weekday/exception plan. */
 .month-calendar{padding:15px 12px;border:1px solid #e2eafb;border-radius:18px;background:linear-gradient(150deg,#fff,#f9faff)}
 .month-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .month-head h3{font-size:18px;margin:0}
@@ -204,8 +204,9 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 .month-legend .special{background:#f2a250}.month-legend .diary{background:#9e7ae1}
 @media(max-width:360px){.month-days button{min-height:47px}.month-days{gap:2px}}
 
+.mood-picker{margin-top:10px;color:#586b8d;font-size:12px;font-weight:700}.mood-picker #diaryMoodOptions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.mood-option{border:1px solid #e3e8f3;border-radius:11px;background:#f7f8fc;padding:7px 5px;flex:1;min-width:47px;display:flex;align-items:center;flex-direction:column;gap:4px;color:#53647e}.mood-option span{font-size:22px}.mood-option small{font-size:10px}.mood-option.picked{background:#e4ebff;border-color:#5f7ce6}.month-review{margin-top:18px;border-top:1px solid #e5e9f5;padding-top:12px}.month-review-controls{display:flex;gap:9px;align-items:center;justify-content:space-between}.mood-stat{display:flex;justify-content:space-between;padding:6px 3px;border-bottom:1px solid #f0f1f7}.month-review textarea{width:100%;min-height:88px;margin-top:12px}
 </style></head><body><header class="hero"><div class="hero-inner">
-<div class="hero-top"><span id="greeting" class="hero-kicker">나의 하루, 나의 미래</span><span class="hero-version">v0.5.2</span></div>
+<div class="hero-top"><span id="greeting" class="hero-kicker">나의 하루, 나의 미래</span><span class="hero-version">v0.5.3</span></div>
 <div class="hero-main"><div><h1>라이프플랜</h1><p class="hero-date" id="today"></p></div><span class="hero-symbol" id="heroSymbol" aria-hidden="true">☀</span></div>
 <div class="hero-stats" aria-label="오늘의 요약">
 <button class="hero-stat" type="button" onclick="goTo('daily','dailyTasks')"><span>오늘 일정</span><strong id="heroTaskCount">-</strong></button>
@@ -224,6 +225,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 <div class="flex diary-heading"><div><h3>한 줄 일기</h3><p class="section-note">하루를 한 문장으로 기록하세요.</p></div><button class="soft" type="button" onclick="openDiaryHistory()">지난 일기</button></div>
 <div class="diary-date-row"><label for="diaryDate">날짜</label><input type="date" id="diaryDate" onchange="changeDiaryDate(this.value)" aria-label="일기 날짜 선택"></div>
 <input id="diaryText" type="text" maxlength="120" autocomplete="off" placeholder="기억하고 싶은 오늘의 한 문장..." aria-label="한 줄 일기 내용" oninput="onDiaryInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();saveDiary()}">
+<div class="mood-picker"><span>오늘의 기분</span><div id="diaryMoodOptions"></div></div>
 <div class="diary-actions"><span id="diaryStatus" class="diary-note" role="status" aria-live="polite">하루에 한 줄씩 기록할 수 있습니다.</span><span id="diaryCharCount">0/120</span><button id="diaryDeleteBtn" class="soft" type="button" onclick="deleteDiary()" hidden>삭제</button><button class="btn" type="button" onclick="saveDiary()">저장</button></div>
 </div>
 <div class="card"><div class="flex"><div><h3>24시간 생활계획표</h3><div class="section-note">요일을 선택하거나 원형 구간을 터치해 편집하세요</div></div><button class="soft" type="button" onclick="editTask()">편집</button></div><div id="daybar" class="daybar"></div>
@@ -265,7 +267,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 <section class="page secondary-page" id="recurring"><div class="card"><div class="flex"><h3>반복 생활관리</h3><button class="btn" onclick="editRecurring()">+ 등록</button></div><p class="section-note">주기적으로 해야 할 일을 자동으로 알려줍니다.</p><div id="recurringSummary" class="secondary-summary"></div><div class="preset-row" aria-label="생활관리 빠른 등록"><button type="button" onclick="addRecurringPreset('nails')">+ 손톱 깎기 · 매주</button><button type="button" onclick="addRecurringPreset('bedding')">+ 침구 세탁 · 격주</button><button type="button" onclick="addRecurringPreset('hair')">+ 이발 · 30일</button></div><button class="soft" type="button" onclick="window.LifePlanNative?.requestReminderPermission?.()">알림 권한 허용</button><div id="recurringList"></div></div></section>
 <section class="page secondary-page" id="goals"><div class="card"><div class="flex"><h3>인생 목표</h3><button class="btn" onclick="editGoal()">+ 목표</button></div><div id="goalSummary" class="secondary-summary"></div><div id="goallist"></div></div></section>
 <section class="page secondary-page" id="habits"><div class="card"><div class="flex"><h3>습관 체크</h3><button class="btn" onclick="editHabit()">+ 습관</button></div><div id="habitSummary" class="secondary-summary"></div><div id="habitlist"></div></div></section>
-<section class="page secondary-page" id="settings"><div class="card"><h3>앱 정보와 업데이트</h3><div class="secondary-summary">설치 버전: <strong>v0.5.2</strong> · 기존 데이터 유지</div><label style="display:flex;align-items:center;gap:12px;margin:15px 0;color:#344562"><input type="checkbox" id="autoUpdate" style="width:23px;height:23px" checked onchange="setAutoUpdate(this.checked)"><span>자동 업데이트 확인·다운로드</span></label><p class="section-note">새 버전은 자동으로 내려받고 설치 확인 화면을 엽니다. 최종 설치는 Android에서 한 번 승인해야 합니다.</p><button class="btn" type="button" onclick="update()">최신 버전 확인 및 설치</button> <button class="soft" type="button" onclick="retryUpdateDownload()">다운로드 초기화·재시도</button><p id="updateStatus" class="section-note" role="status" aria-live="polite"></p></div><div class="card"><h3>생활계획표 일정 알림</h3>
+<section class="page secondary-page" id="settings"><div class="card"><h3>앱 정보와 업데이트</h3><div class="secondary-summary">설치 버전: <strong>v0.5.3</strong> · 기존 데이터 유지</div><label style="display:flex;align-items:center;gap:12px;margin:15px 0;color:#344562"><input type="checkbox" id="autoUpdate" style="width:23px;height:23px" checked onchange="setAutoUpdate(this.checked)"><span>자동 업데이트 확인·다운로드</span></label><p class="section-note">새 버전은 자동으로 내려받고 설치 확인 화면을 엽니다. 최종 설치는 Android에서 한 번 승인해야 합니다.</p><button class="btn" type="button" onclick="update()">최신 버전 확인 및 설치</button> <button class="soft" type="button" onclick="retryUpdateDownload()">다운로드 초기화·재시도</button><p id="updateStatus" class="section-note" role="status" aria-live="polite"></p></div><div class="card"><h3>생활계획표 일정 알림</h3>
  <p class="section-note">요일별 기본 계획과 특별 날짜 계획을 기준으로 일정 시작 전에 알립니다. Android 배터리 최적화에 따라 알림 시간이 약간 늦어질 수 있습니다.</p>
  <label for="scheduleLead">일정 시작 전 알림 시점</label>
  <select id="scheduleLead" onchange="setScheduleLead(this.value)">
@@ -287,9 +289,9 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
  <div class="flex"><h3>한 줄 일기 모아보기</h3><button class="soft" type="button" onclick="diaryHistoryDialog.close()">닫기</button></div>
  <p id="diaryHistorySummary" class="section-note">지난 일기 목록</p>
  <div class="diary-search"><label for="diarySearch">날짜나 내용 검색</label><input id="diarySearch" type="search" placeholder="예: 2026-10 또는 기억하고 싶은 단어" oninput="renderDiaryHistory()" autocomplete="off"></div>
- <div id="diaryHistoryList"></div>
+ <div id="diaryHistoryList"></div><div class="month-review"><h3>월간 회고</h3><div class="month-review-controls"><button class="soft" type="button" onclick="moveDiaryMonth(-1)">‹ 이전</button><strong id="diaryMonthLabel"></strong><button class="soft" type="button" onclick="moveDiaryMonth(1)">다음 ›</button></div><p id="diaryMonthStats" class="section-note"></p><div id="diaryMoodStats"></div><p id="diaryStreak" class="section-note"></p><textarea id="monthlyReviewText" maxlength="500" rows="3" placeholder="이번 달에 잘한 점, 기억할 일, 다음 달 목표를 적어보세요."></textarea><div class="actions"><button class="soft" type="button" onclick="deleteMonthlyReview()">회고 삭제</button><button class="btn" type="button" onclick="saveMonthlyReview()">월간 회고 저장</button></div></div>
 </dialog><dialog id="habitDialog"><h3>습관 추가</h3><input id="hname" maxlength="40" placeholder="예: 매일 30분 운동"><div class="actions"><button class="soft" onclick="habitDialog.close()">취소</button><button class="btn" onclick="saveHabit()">저장</button></div></dialog>
-<script src="execution-analytics.js"></script>
+<script src="execution-analytics.js"></script><script src="diary-insights.js"></script>
 <script>
 const K='lifeplan.v1',D=['일','월','화','수','목','금','토'],$=id=>document.getElementById(id),date=()=>localISO(new Date()),min=s=>{let a=s.split(':').map(Number);return a[0]*60+a[1]},esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let db;try{db=JSON.parse(localStorage.getItem(K))}catch(e){}if(!db||!Array.isArray(db.tasks))db={tasks:[{id:1,name:'수면',start:'00:00',end:'07:00',color:'#91a6ee',repeat:'all'},{id:2,name:'아침 준비',start:'07:00',end:'08:00',color:'#f6c687',repeat:'all'},{id:3,name:'업무·공부',start:'09:00',end:'12:00',color:'#8ad3b1',repeat:'weekday'},{id:4,name:'운동',start:'18:00',end:'19:00',color:'#efaab1',repeat:'all'}],goals:[],habits:[]};db.goals=Array.isArray(db.goals)?db.goals:[];db.habits=Array.isArray(db.habits)?db.habits:[];db.habits.forEach(h=>{if(!Array.isArray(h.dates))h.dates=h.done?[h.done]:[]});db.recurring=Array.isArray(db.recurring)?db.recurring:[];db.templates=db.templates&&typeof db.templates==='object'&&!Array.isArray(db.templates)?db.templates:{};db.specialPlans=db.specialPlans&&typeof db.specialPlans==='object'&&!Array.isArray(db.specialPlans)?db.specialPlans:{};Object.keys(db.specialPlans).forEach(k=>{let p=db.specialPlans[k];if(!p||!Array.isArray(p.tasks))delete db.specialPlans[k]});
@@ -299,7 +301,7 @@ const taskDays=t=>Array.isArray(t.days)?t.days:(t.repeat==='weekday'?[1,2,3,4,5]
 const validPlanDate=s=>/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(s)&&localISO(new Date(Number(s.slice(0,4)),Number(s.slice(5,7))-1,Number(s.slice(8))))===s;
 const DIARY_LIMIT=120;
 function normalizeDiaryEntries(entries){const o={};if(entries&&typeof entries==='object'&&!Array.isArray(entries))for(const [d,t] of Object.entries(entries)){if(validPlanDate(d)&&typeof t==='string'&&t.trim())o[d]=t.trim().slice(0,DIARY_LIMIT)}return o}
-db.diaryEntries=normalizeDiaryEntries(db.diaryEntries);db.executionLog=LifePlanAnalytics.normalizeLog(db.executionLog);
+db.diaryEntries=normalizeDiaryEntries(db.diaryEntries);db.diaryMoods=LifePlanDiary.normalizeMoods(db.diaryMoods);db.monthlyReviews=LifePlanDiary.normalizeMonthlyReviews(db.monthlyReviews);db.executionLog=LifePlanAnalytics.normalizeLog(db.executionLog);
 let diaryDay=date(),diaryDirty=false;
 
 const weekdayOf=s=>{let [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).getDay()};
@@ -323,12 +325,51 @@ function showSpecialList(){weeklyMode='special';goTo('weekly')}
 function setWeeklyMode(mode){weeklyMode=['special','stats'].includes(mode)?mode:'base';render()}
 function renderSpecialPlans(){let dates=Object.keys(db.specialPlans).filter(validPlanDate).sort(),cards=dates.map(s=>{let p=db.specialPlans[s],items=Array.isArray(p.tasks)?p.tasks:[];return '<div class="special-plan-card"><div class="special-head"><div><b>'+esc(p.title||'특별 계획')+'</b><small>'+esc(s)+' ('+D[weekdayOf(s)]+') · '+items.length+'개 일정</small></div><span class="special-chip">특별</span></div><div class="special-items">'+(items.length?items.slice(0,4).map(t=>esc(t.start)+'–'+esc(t.end)+' '+esc(t.name)).join(' · '):'등록된 일정 없음')+'</div><div class="special-buttons"><button class="btn" type="button" onclick="selectPlanDate(\''+s+'\');goTo(\'daily\')">날짜별 편집</button><button class="soft" onclick="openSpecialDialog(\''+s+'\')">이름 수정</button><button class="soft" onclick="removeSpecialDate(\''+s+'\')">삭제</button></div></div>'}).join('');$('specialPlansList').innerHTML=cards||'<p class="section-note">특별 계획이 없습니다. 날짜를 선택하고 “이 날짜만 다르게”를 눌러 추가하세요.</p>';$('specialCount').textContent='('+dates.length+')';$('weekBaseBtn').classList.toggle('selected',weeklyMode==='base');$('weekSpecialBtn').classList.toggle('selected',weeklyMode==='special');$('weekStatsBtn').classList.toggle('selected',weeklyMode==='stats');$('weeklyStatsBody').hidden=weeklyMode!=='stats';$('weeklyDefaultBody').hidden=weeklyMode!=='base';$('weeklySpecialBody').hidden=weeklyMode!=='special'}
 
+
+let diaryReviewMonth=date().slice(0,7);
+function renderMoodPicker(){
+ $('diaryMoodOptions').innerHTML=LifePlanDiary.MOODS.map(m=>'<button type="button" class="mood-option '+(db.diaryMoods[diaryDay]===m.id?'picked':'')+'" aria-pressed="'+(db.diaryMoods[diaryDay]===m.id)+'" onclick="setDiaryMood(\''+m.id+'\')"><span>'+m.emoji+'</span><small>'+m.label+'</small></button>').join('');
+}
+function setDiaryMood(id){
+ if(!LifePlanDiary.moodOf(id)||diaryDay>date())return;
+ if(db.diaryMoods[diaryDay]===id)delete db.diaryMoods[diaryDay];
+ else db.diaryMoods[diaryDay]=id;
+ save();
+}
+function moveDiaryMonth(delta){
+ const [year,month]=diaryReviewMonth.split('-').map(Number);
+ const next=new Date(year,month-1+delta,1);
+ const chosen=LifePlanDiary.isoDate(next).slice(0,7);
+ if(chosen>date().slice(0,7))return;
+ diaryReviewMonth=chosen;renderMonthlyReview();
+}
+function renderMonthlyReview(){
+ let result=LifePlanDiary.monthSummary(db.diaryEntries,db.diaryMoods,diaryReviewMonth,date());
+ if(!result)return;
+ $('diaryMonthLabel').textContent=diaryReviewMonth.replace('-','년 ')+'월';
+ $('diaryMonthStats').textContent='기록 '+result.recordedDays+'일 · 한 줄 일기 '+result.textDays+'일 · 기분 '+result.moodDays+'일 · 기록률 '+result.consistency+'%';
+ $('diaryMoodStats').innerHTML=result.distribution.map(m=>'<div class="mood-stat"><span>'+m.emoji+' '+m.label+'</span><b>'+m.count+'일</b></div>').join('');
+ $('diaryStreak').textContent='현재 연속 기록: '+LifePlanDiary.currentStreak(db.diaryEntries,db.diaryMoods,date())+'일'+(result.topMoods.length?' · 이번 달 가장 많은 기분: '+result.topMoods.join(', '):'');
+ $('monthlyReviewText').value=db.monthlyReviews[diaryReviewMonth]||'';
+}
+function saveMonthlyReview(){
+ let entry=$('monthlyReviewText').value.trim();
+ if(!LifePlanDiary.validMonth(diaryReviewMonth)||diaryReviewMonth>date().slice(0,7))return;
+ if(entry)db.monthlyReviews[diaryReviewMonth]=entry.slice(0,500);
+ else delete db.monthlyReviews[diaryReviewMonth];
+ save();renderMonthlyReview();
+}
+function deleteMonthlyReview(){
+ if(!db.monthlyReviews[diaryReviewMonth]||!confirm('이번 달 회고를 삭제할까요?'))return;
+ delete db.monthlyReviews[diaryReviewMonth];save();renderMonthlyReview();
+}
+
 function renderDiaryCard(){
  $('diaryDate').max=date();
  if(!validPlanDate(diaryDay)||diaryDay>date())diaryDay=date();
  $('diaryDate').value=diaryDay;
  if(!diaryDirty){$('diaryText').value=db.diaryEntries[diaryDay]||'';$('diaryStatus').textContent=db.diaryEntries[diaryDay]?'저장된 일기 · 수정 가능':'이 날짜의 첫 기록을 남겨보세요.'}
- $('diaryCharCount').textContent=$('diaryText').value.length+'/'+DIARY_LIMIT;
+ $('diaryCharCount').textContent=$('diaryText').value.length+'/'+DIARY_LIMIT;renderMoodPicker();
  $('diaryDeleteBtn').hidden=!Object.prototype.hasOwnProperty.call(db.diaryEntries,diaryDay);
 }
 function onDiaryInput(){diaryDirty=true;$('diaryStatus').textContent='저장 전';renderDiaryCard()}
@@ -349,7 +390,7 @@ function deleteDiary(){
  if(!confirm(diaryDay+' 일기를 삭제할까요?'))return;
  delete db.diaryEntries[diaryDay];diaryDirty=false;save();
 }
-function openDiaryHistory(){$('diarySearch').value='';renderDiaryHistory();$('diaryHistoryDialog').showModal()}
+function openDiaryHistory(){$('diarySearch').value='';diaryReviewMonth=date().slice(0,7);renderDiaryHistory();renderMonthlyReview();$('diaryHistoryDialog').showModal()}
 function renderDiaryHistory(){
  const q=$('diarySearch').value.trim().toLowerCase(),dates=Object.keys(db.diaryEntries).filter(validPlanDate).sort().reverse(),matched=dates.filter(d=>d.includes(q)||db.diaryEntries[d].toLowerCase().includes(q));
  $('diaryHistorySummary').textContent='전체 '+dates.length+'개 · 검색 결과 '+matched.length+'개';
@@ -481,7 +522,7 @@ function completeRecurring(id){let t=db.recurring.find(x=>x.id===id);if(t){t.las
 function renderRecurring(){let list=$('recurringList');if(!list)return;let due=db.recurring.filter(t=>recurringDue(t));$('recurringSummary').textContent='등록 '+db.recurring.length+'개 · 미완료 '+due.length+'개 · 완료한 일은 다음 주기에 다시 알립니다.';let rest=db.recurring.filter(t=>!recurringDue(t));list.innerHTML='<p class="muted">확인할 일 '+due.length+'개</p>'+([...due,...rest].map(t=>{let overdue=recurringDue(t),scheduled=recurringNextDate(t),state=overdue?(scheduled<date()?'지난 일정 미완료':'오늘 확인 필요'):'다음 예정일';let repeat=t.mode==='weekly'?'매주 '+D[t.weekday]+'요일':t.mode==='monthly'?'매월 '+t.monthDay+'일':'완료 후 '+t.days+'일';return '<div class="item"><div class="grow"><b>'+esc(t.name)+'</b><div class="sub">'+state+' '+scheduled+' · '+repeat+' · '+esc(t.time)+'</div></div>'+(overdue?'<button class="btn" onclick="completeRecurring('+t.id+')">완료</button>':'')+'<button class="soft" onclick="editRecurring('+t.id+')">수정</button></div>'}).join('')||'<p class="muted">반복할 일을 등록하세요.</p>')}
 function adjustGoal(id,delta){let g=db.goals.find(x=>x.id===id);if(g){g.progress=Math.max(0,Math.min(100,(Number(g.progress)||0)+delta));save()}}function deleteGoal(){let id=+$('gid').value;if(!id||!confirm('이 목표를 삭제할까요?'))return;db.goals=db.goals.filter(g=>g.id!==id);$('goalDialog').close();save()}function editGoal(id){let g=db.goals.find(x=>x.id===id);$('gid').value=g?.id||'';$('gname').value=g?.name||'';$('horizon').value=g?.horizon||'1년';$('progress').value=g?.progress||0;$('deleteGoal').hidden=!g;$('goalDialog').showModal()}function saveGoal(){let name=$('gname').value.trim();if(!name)return;let id=+$('gid').value||Date.now(),g={id,name,horizon:$('horizon').value,progress:Math.max(0,Math.min(100,Number($('progress').value)||0))},i=db.goals.findIndex(x=>x.id===id);if(i<0)db.goals.push(g);else db.goals[i]=g;$('goalDialog').close();save()}
 function editHabit(){$('hname').value='';$('habitDialog').showModal()}function habitHistory(h){return Array.isArray(h.dates)?h.dates:(h.done?[h.done]:[])}function habitStreak(h){let days=habitHistory(h),day=date(),count=0;if(!days.includes(day))day=addDays(day,-1);while(days.includes(day)){count++;day=addDays(day,-1)}return count}function saveHabit(){let name=$('hname').value.trim();if(name)db.habits.push({id:Date.now(),name,done:'',dates:[]});$('habitDialog').close();save()}function habitCheck(id,v){let h=db.habits.find(x=>x.id===id);if(h){let today=date();h.dates=habitHistory(h).filter(x=>x!==today);if(v)h.dates.push(today);h.done=v?today:'';save()}}function habitDelete(id){if(!confirm('습관을 삭제할까요?'))return;db.habits=db.habits.filter(h=>h.id!==id);save()}
-function startRestore(){let input=$('upload');input.value='';input.click()}function backup(){let b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='lifeplan-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}function restore(e){let f=e.files[0];if(!f)return;f.text().then(s=>{let x=JSON.parse(s);if(!x||!Array.isArray(x.tasks)||!Array.isArray(x.goals)||!Array.isArray(x.habits))throw Error();x.habits.forEach(h=>{if(!Array.isArray(h.dates))h.dates=h.done?[h.done]:[]});x.recurring=Array.isArray(x.recurring)?x.recurring:[];x.specialPlans=x.specialPlans&&typeof x.specialPlans==='object'&&!Array.isArray(x.specialPlans)?x.specialPlans:{};x.templates=x.templates&&typeof x.templates==='object'&&!Array.isArray(x.templates)?x.templates:{};x.diaryEntries=normalizeDiaryEntries(x.diaryEntries);x.executionLog=LifePlanAnalytics.normalizeLog(x.executionLog);x.scheduleLead=[0,5,10,30].includes(Number(x.scheduleLead))?Number(x.scheduleLead):0;if(confirm('현재 데이터를 복원 파일로 교체할까요?')){db=x;save()}}).catch(()=>alert('잘못된 백업 파일입니다.'))}
+function startRestore(){let input=$('upload');input.value='';input.click()}function backup(){let b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='lifeplan-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}function restore(e){let f=e.files[0];if(!f)return;f.text().then(s=>{let x=JSON.parse(s);if(!x||!Array.isArray(x.tasks)||!Array.isArray(x.goals)||!Array.isArray(x.habits))throw Error();x.habits.forEach(h=>{if(!Array.isArray(h.dates))h.dates=h.done?[h.done]:[]});x.recurring=Array.isArray(x.recurring)?x.recurring:[];x.specialPlans=x.specialPlans&&typeof x.specialPlans==='object'&&!Array.isArray(x.specialPlans)?x.specialPlans:{};x.templates=x.templates&&typeof x.templates==='object'&&!Array.isArray(x.templates)?x.templates:{};x.diaryEntries=normalizeDiaryEntries(x.diaryEntries);x.diaryMoods=LifePlanDiary.normalizeMoods(x.diaryMoods);x.monthlyReviews=LifePlanDiary.normalizeMonthlyReviews(x.monthlyReviews);x.executionLog=LifePlanAnalytics.normalizeLog(x.executionLog);x.scheduleLead=[0,5,10,30].includes(Number(x.scheduleLead))?Number(x.scheduleLead):0;if(confirm('현재 데이터를 복원 파일로 교체할까요?')){db=x;save()}}).catch(()=>alert('잘못된 백업 파일입니다.'))}
 function versionParts(v){return String(v).replace(/^v/,'').split('-')[0].split('.').map(x=>Number(x)||0)}
 function compareVersions(a,b){let x=versionParts(a),y=versionParts(b);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)-(y[i]||0)}return 0}
 function setAutoUpdate(checked){if(window.LifePlanNative?.setAutoUpdate)window.LifePlanNative.setAutoUpdate(Boolean(checked))}
