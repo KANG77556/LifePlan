@@ -104,6 +104,9 @@ jobs:
               assert token in activity,token
           for token in ['AES/GCM/NoPadding','AndroidKeyStore','getNoBackupFilesDir','getFD().sync()','VaultRules.KEEP']:
               assert token in vault,token
+          assert 'forceNewAfterRestore=true;' in vault
+          assert 'persist(json,force);' in vault
+          assert 'persist(currentJson,true);' in vault
           for token in ['FLAG_SECURE','PinHash.verify','lockDialog.setCancelable(false)']:
               assert token in lock,token
           for token in ['id="vaultBackupSelect"','id="privacyStatus"','window.LifePlanVaultRestored','LifePlanNative?.autoBackup','function restoreVault()']:
