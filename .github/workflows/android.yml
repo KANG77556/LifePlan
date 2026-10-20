@@ -55,6 +55,23 @@ jobs:
                   raise SystemExit('Missing app hook: '+token)
           PY
           node --check /tmp/lifeplan-app.js
+      - name: Test dated diary and monthly mood insights
+        run: |
+          node <<'NODE'
+          const assert=require('assert'),D=require('./app/src/main/assets/diary-insights.js');
+          assert(!D.parseDate('2026-02-29'));
+          assert(D.parseDate('2024-02-29'));
+          const moods=D.normalizeMoods({'2026-10-18':'good','2026-10-19':'great','2026-10-20':'okay','invalid':'hard','2026-10-25':'invalid'});
+          assert(Object.keys(moods).length===3);
+          const notes={'2026-10-18':'하루','2026-10-19':'좋았다'};
+          assert(D.currentStreak(notes,moods,'2026-10-20')===3);
+          const stats=D.monthSummary(notes,moods,'2026-10','2026-10-20');
+          assert(stats.recordedDays===3&&stats.moodDays===3&&stats.textDays===2);
+          assert(stats.consistency===15);
+          assert(D.normalizeMonthlyReviews({'2026-10':'한 달 정리','2026-13':'잘못된 월'})['2026-10']==='한 달 정리');
+          assert(!D.normalizeMonthlyReviews({'2026-13':'잘못된 월'})['2026-13']);
+          console.log('Diary mood and monthly review tests passed');
+          NODE
       - name: Test dated execution analytics
         run: |
           node <<'NODE'
