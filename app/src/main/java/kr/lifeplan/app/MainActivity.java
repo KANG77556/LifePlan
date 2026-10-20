@@ -38,16 +38,18 @@ public class MainActivity extends Activity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDefaultTextEncodingName("UTF-8");
+        settings.setAllowFileAccessFromFileURLs(false);
+        settings.setAllowUniversalAccessFromFileURLs(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
                 if (url.startsWith("file:///android_asset/")) { updater.onWebReady(); privacyLock.sendStatus(); backupVault.listBackups(); openWidgetPage(); }
             }
+            @Override public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
+                return externalOrBlock(request.getUrl().toString());
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.startsWith("https://")) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                    return true;
-                }
-                return false;
+                return externalOrBlock(url);
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -109,6 +111,16 @@ public class MainActivity extends Activity {
         setContentView(root);
         if (Build.VERSION.SDK_INT >= 35) root.requestApplyInsets();
         web.loadUrl("file:///android_asset/index.html");
+    }
+
+    /** Keep the privileged JS bridge reachable only from bundled local content. */
+    private boolean externalOrBlock(String url) {
+        if(url!=null && url.startsWith("file:///android_asset/"))return false;
+        if(url!=null && url.startsWith("https://")){
+            try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)));}
+            catch(Exception ignored){}
+        }
+        return true; // Never load untrusted content into the WebView with JS interfaces.
     }
 
     private void openWidgetPage() {
