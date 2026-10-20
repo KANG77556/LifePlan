@@ -67,6 +67,7 @@ public class MainActivity extends Activity {
         });
         web.addJavascriptInterface(new Object() {
             @JavascriptInterface public void syncWidgets(String json) { LifePlanWidget.sync(MainActivity.this, json); }
+            @JavascriptInterface public void syncScheduleAlarms(String json) { ScheduleAlertReceiver.sync(MainActivity.this,json); }
             @JavascriptInterface public void syncReminders(String json) { runOnUiThread(() -> ReminderReceiver.schedule(MainActivity.this,json)); }
             @JavascriptInterface public void requestReminderPermission() { runOnUiThread(() -> { if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 405); }); }
             @JavascriptInterface public void openInstaller(String url) { runOnUiThread(() -> updater.checkForUpdates(false)); }
