@@ -80,7 +80,7 @@ header.hero.compact::after{display:none}
 body:has(header.hero.compact) .wrap{padding-top:12px}
 @media(max-width:370px){header.hero.compact .hero-main h1{font-size:21px}}
 
-/* v0.5.0 compact overview + functional secondary screens */
+/* v0.5.1 compact overview + functional secondary screens */
 header.hero:not(.compact){padding:15px 15px 13px;border-radius:0 0 25px 25px}
 header.hero:not(.compact) .hero-main h1{font-size:27px;margin:4px 0 4px}
 header.hero:not(.compact) .hero-main .hero-date{font-size:13px}
@@ -176,8 +176,36 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 .diary-history-row .diary-history-date{display:block;color:#5c75c4;font-weight:750;font-size:12px;margin-bottom:5px}
 .diary-history-row .diary-history-text{display:block;color:#334967;line-height:1.5;font-size:13px;overflow-wrap:anywhere}
 
+
+/* v0.5.1 monthly overview: tap dates to open weekday/exception plan. */
+.month-calendar{padding:15px 12px;border:1px solid #e2eafb;border-radius:18px;background:linear-gradient(150deg,#fff,#f9faff)}
+.month-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.month-head h3{font-size:18px;margin:0}
+.month-head .month-nav{display:flex;align-items:center;gap:6px}
+.month-head button{border:0;background:#ecf1ff;color:#4d67ac;border-radius:10px;min-height:37px;min-width:38px;font-weight:750}
+.month-weekdays,.month-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.month-weekdays span{text-align:center;font-size:11px;color:#8b98b3;font-weight:700;padding:5px 0}
+.month-weekdays span:first-child{color:#d57a86}.month-weekdays span:last-child{color:#6c86cc}
+.month-days button,.month-blank{width:100%;min-width:0;min-height:51px}
+.month-days button{position:relative;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;gap:4px;padding:7px 0 5px;border:1px solid transparent;border-radius:11px;background:#f6f8fd;color:#394969;font-size:13px;font-weight:650}
+.month-days button.today-date{border-color:#839af1}
+.month-days button.chosen-date{background:#5377ec;color:white}
+.month-days button.special-date:not(.chosen-date){background:#fff0dc;border-color:#f4d5a7}
+.month-days button:focus-visible{outline:2px solid #6577dd}
+.month-days button .markers{display:flex;gap:3px;align-items:center;justify-content:center;min-height:5px}
+.month-days button .marker{display:block;width:5px;height:5px;border-radius:50%;background:#c0cbdf}
+.month-days button .marker.special{background:#f2a250}
+.month-days button .marker.diary{background:#9e7ae1}
+.month-days button.chosen-date .marker{background:white}
+.month-summary{margin-top:11px;font-size:12px;color:#647698}
+.month-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;color:#7d8dab;font-size:11px}
+.month-legend span{display:flex;align-items:center;gap:5px}
+.month-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.month-legend .special{background:#f2a250}.month-legend .diary{background:#9e7ae1}
+@media(max-width:360px){.month-days button{min-height:47px}.month-days{gap:2px}}
+
 </style></head><body><header class="hero"><div class="hero-inner">
-<div class="hero-top"><span id="greeting" class="hero-kicker">나의 하루, 나의 미래</span><span class="hero-version">v0.5.0</span></div>
+<div class="hero-top"><span id="greeting" class="hero-kicker">나의 하루, 나의 미래</span><span class="hero-version">v0.5.1</span></div>
 <div class="hero-main"><div><h1>라이프플랜</h1><p class="hero-date" id="today"></p></div><span class="hero-symbol" id="heroSymbol" aria-hidden="true">☀</span></div>
 <div class="hero-stats" aria-label="오늘의 요약">
 <button class="hero-stat" type="button" onclick="goTo('daily','dailyTasks')"><span>오늘 일정</span><strong id="heroTaskCount">-</strong></button>
@@ -212,7 +240,18 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 </div><svg id="dial" viewBox="0 0 350 350" role="img" aria-label="선택한 요일의 24시간 생활계획표"></svg><div id="legend" class="chips"></div></div><div class="card" id="dailyTasks"><div class="flex"><h3 id="selectedTasksHeading">날짜별 일정</h3><span id="count" class="sub"></span></div><div id="tasks"></div></div>
 <div class="card due-home" id="homeRecurringCard"><div class="flex"><h3>반복관리 · 확인할 일</h3><button type="button" class="soft" onclick="goTo('recurring')">전체 보기</button></div><div id="homeRecurring"></div></div>
 </section>
-<section class="page secondary-page" id="weekly"><div class="card"><div class="flex"><h3>주간 계획</h3><button class="soft" type="button" onclick="goTo('daily')">생활계획표</button></div><div id="weeklySummary" class="secondary-summary"></div>
+<section class="page secondary-page" id="weekly"><div class="card"><div class="flex"><h3>주간 계획</h3><button class="soft" type="button" onclick="goTo('daily')">생활계획표</button></div><div class="month-calendar" aria-label="월간 생활계획표">
+<div class="month-head"><h3 id="monthTitle">월간 달력</h3>
+ <div class="month-nav">
+  <button type="button" onclick="changeCalendarMonth(-1)" aria-label="이전 달">‹</button>
+  <button type="button" onclick="resetCalendarMonth()">오늘</button>
+  <button type="button" onclick="changeCalendarMonth(1)" aria-label="다음 달">›</button>
+ </div></div>
+<div class="month-weekdays" aria-hidden="true"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+<div id="monthDays" class="month-days" role="group" aria-label="날짜별 계획"></div>
+<div class="month-legend"><span><i class="special"></i>특별 계획</span><span><i class="diary"></i>한 줄 일기</span></div>
+<div id="monthSummary" class="month-summary"></div></div>
+<div id="weeklySummary" class="secondary-summary"></div>
 <div class="weekly-switch" aria-label="계획 종류">
 <button class="selected" id="weekBaseBtn" type="button" onclick="setWeeklyMode('base')">요일별 기본 계획</button>
 <button id="weekSpecialBtn" type="button" onclick="setWeeklyMode('special')">특별 계획 <span id="specialCount"></span></button>
@@ -224,7 +263,15 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 <section class="page secondary-page" id="recurring"><div class="card"><div class="flex"><h3>반복 생활관리</h3><button class="btn" onclick="editRecurring()">+ 등록</button></div><p class="section-note">주기적으로 해야 할 일을 자동으로 알려줍니다.</p><div id="recurringSummary" class="secondary-summary"></div><div class="preset-row" aria-label="생활관리 빠른 등록"><button type="button" onclick="addRecurringPreset('nails')">+ 손톱 깎기 · 매주</button><button type="button" onclick="addRecurringPreset('bedding')">+ 침구 세탁 · 격주</button><button type="button" onclick="addRecurringPreset('hair')">+ 이발 · 30일</button></div><button class="soft" type="button" onclick="window.LifePlanNative?.requestReminderPermission?.()">알림 권한 허용</button><div id="recurringList"></div></div></section>
 <section class="page secondary-page" id="goals"><div class="card"><div class="flex"><h3>인생 목표</h3><button class="btn" onclick="editGoal()">+ 목표</button></div><div id="goalSummary" class="secondary-summary"></div><div id="goallist"></div></div></section>
 <section class="page secondary-page" id="habits"><div class="card"><div class="flex"><h3>습관 체크</h3><button class="btn" onclick="editHabit()">+ 습관</button></div><div id="habitSummary" class="secondary-summary"></div><div id="habitlist"></div></div></section>
-<section class="page secondary-page" id="settings"><div class="card"><h3>앱 정보와 업데이트</h3><div class="secondary-summary">설치 버전: <strong>v0.5.0</strong> · 기존 데이터 유지</div><label style="display:flex;align-items:center;gap:12px;margin:15px 0;color:#344562"><input type="checkbox" id="autoUpdate" style="width:23px;height:23px" checked onchange="setAutoUpdate(this.checked)"><span>자동 업데이트 확인·다운로드</span></label><p class="section-note">새 버전은 자동으로 내려받고 설치 확인 화면을 엽니다. 최종 설치는 Android에서 한 번 승인해야 합니다.</p><button class="btn" type="button" onclick="update()">최신 버전 확인 및 설치</button> <button class="soft" type="button" onclick="retryUpdateDownload()">다운로드 초기화·재시도</button><p id="updateStatus" class="section-note" role="status" aria-live="polite"></p></div><div class="card"><h3>홈 화면 위젯</h3><p class="section-note">홈 화면을 길게 눌러 위젯 메뉴에서 <b>라이프플랜</b>을 찾으세요. 원형 24시간 생활계획표(4×4, 확대하면 현재·다음·오늘 일정 표시), 오늘 일정(4×2), 반복관리(2×2)를 선택할 수 있습니다. 앱에서 수정한 내용은 위젯에 자동 반영됩니다.</p></div><div class="card"><h3>데이터 백업·복원</h3><div id="dataSummary" class="secondary-summary"></div><p class="section-note">앱을 삭제하면 일정이 사라질 수 있습니다. 삭제하거나 기기를 바꾸기 전 백업하세요.</p><div class="settings-actions"><button class="btn" type="button" onclick="backup()">JSON 파일로 백업</button><button class="soft" type="button" onclick="startRestore()">백업 파일 복원</button></div><p class="section-note">복원 시 현재 데이터가 교체됩니다. 복원 전에 백업을 만들어 주세요.</p><input hidden id="upload" type="file" accept="application/json,.json" onchange="restore(this)"></div></section></div>
+<section class="page secondary-page" id="settings"><div class="card"><h3>앱 정보와 업데이트</h3><div class="secondary-summary">설치 버전: <strong>v0.5.1</strong> · 기존 데이터 유지</div><label style="display:flex;align-items:center;gap:12px;margin:15px 0;color:#344562"><input type="checkbox" id="autoUpdate" style="width:23px;height:23px" checked onchange="setAutoUpdate(this.checked)"><span>자동 업데이트 확인·다운로드</span></label><p class="section-note">새 버전은 자동으로 내려받고 설치 확인 화면을 엽니다. 최종 설치는 Android에서 한 번 승인해야 합니다.</p><button class="btn" type="button" onclick="update()">최신 버전 확인 및 설치</button> <button class="soft" type="button" onclick="retryUpdateDownload()">다운로드 초기화·재시도</button><p id="updateStatus" class="section-note" role="status" aria-live="polite"></p></div><div class="card"><h3>생활계획표 일정 알림</h3>
+ <p class="section-note">요일별 기본 계획과 특별 날짜 계획을 기준으로 일정 시작 전에 알립니다. Android 배터리 최적화에 따라 알림 시간이 약간 늦어질 수 있습니다.</p>
+ <label for="scheduleLead">일정 시작 전 알림 시점</label>
+ <select id="scheduleLead" onchange="setScheduleLead(this.value)">
+  <option value="0">알림 끔</option><option value="5">5분 전</option><option value="10">10분 전</option><option value="30">30분 전</option>
+ </select>
+ <div class="settings-actions"><button type="button" class="soft" onclick="window.LifePlanNative?.requestReminderPermission?.()">알림 권한 허용</button></div>
+ <p id="scheduleAlertStatus" class="section-note" role="status" aria-live="polite">일정 시작 알림 설정을 확인하세요.</p>
+</div><div class="card"><h3>홈 화면 위젯</h3><p class="section-note">홈 화면을 길게 눌러 위젯 메뉴에서 <b>라이프플랜</b>을 찾으세요. 원형 24시간 생활계획표(4×4, 확대하면 현재·다음·오늘 일정 표시), 오늘 일정(4×2), 반복관리(2×2)를 선택할 수 있습니다. 앱에서 수정한 내용은 위젯에 자동 반영됩니다.</p></div><div class="card"><h3>데이터 백업·복원</h3><div id="dataSummary" class="secondary-summary"></div><p class="section-note">앱을 삭제하면 일정이 사라질 수 있습니다. 삭제하거나 기기를 바꾸기 전 백업하세요.</p><div class="settings-actions"><button class="btn" type="button" onclick="backup()">JSON 파일로 백업</button><button class="soft" type="button" onclick="startRestore()">백업 파일 복원</button></div><p class="section-note">복원 시 현재 데이터가 교체됩니다. 복원 전에 백업을 만들어 주세요.</p><input hidden id="upload" type="file" accept="application/json,.json" onchange="restore(this)"></div></section></div>
 <nav aria-label="하단 메뉴"><button class="on" data-page="daily" onclick="tab('daily',this)"><span class="nav-icon" aria-hidden="true">◷</span>오늘</button><button data-page="weekly" onclick="tab('weekly',this)"><span class="nav-icon" aria-hidden="true">▦</span>주간</button><button data-page="recurring" onclick="tab('recurring',this)"><span class="nav-icon" aria-hidden="true">↻</span>반복관리</button><button data-page="goals" onclick="tab('goals',this)"><span class="nav-icon" aria-hidden="true">◎</span>목표</button><button data-page="habits" onclick="tab('habits',this)"><span class="nav-icon" aria-hidden="true">✓</span>습관</button><button data-page="settings" onclick="tab('settings',this)"><span class="nav-icon" aria-hidden="true">⚙</span>설정</button></nav>
 <dialog id="taskDialog"><h3 id="taskDialogTitle">일정 편집</h3><p id="taskScopeHint" class="section-note"></p><input id="tid" type="hidden"><label>활동명</label><input id="tname" maxlength="30" placeholder="예: 운동"><label>시작</label><input id="start" type="time"><label>종료</label><input id="end" type="time"><label>활동 색상</label><input id="color" type="color"><div id="weeklyEditFields"><label>요일별 반복 설정</label><div class="flex"><button class="soft" type="button" onclick="quickDays([0,1,2,3,4,5,6])">매일</button><button class="soft" type="button" onclick="quickDays([1,2,3,4,5])">평일</button><button class="soft" type="button" onclick="quickDays([0,6])">주말</button></div><div id="weekdaybox" class="weekdaybox"></div><label><input id="once" type="checkbox" style="width:auto"> 선택 날짜만 (반복하지 않음)</label></div><div class="actions"><button class="soft" id="deleteTask" onclick="removeTask()">삭제</button><button class="soft" onclick="taskDialog.close()">취소</button><button class="btn" onclick="saveTask()">저장</button></div></dialog>
 <dialog id="specialDialog"><h3 id="specialDialogTitle">특별 날짜 계획 만들기</h3>
