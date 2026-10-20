@@ -25,6 +25,7 @@ public class MainActivity extends Activity {
     private AppUpdater updater;
     private BackupVault backupVault;
     private PrivacyLock privacyLock;
+    private ExternalBackup externalBackup;
     private String pendingWidgetPage;
 
     @Override public void onCreate(Bundle state) {
@@ -34,6 +35,7 @@ public class MainActivity extends Activity {
         privacyLock = new PrivacyLock(this,web);
         privacyLock.initialize();
         backupVault = new BackupVault(this,web);
+        externalBackup = new ExternalBackup(this,web);
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -43,7 +45,7 @@ public class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
-                if (url.startsWith("file:///android_asset/")) { updater.onWebReady(); privacyLock.sendStatus(); backupVault.listBackups(); openWidgetPage(); }
+                if (url.startsWith("file:///android_asset/")) { updater.onWebReady(); privacyLock.sendStatus(); backupVault.listBackups(); externalBackup.info(); openWidgetPage(); }
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
                 return externalOrBlock(request.getUrl().toString());
@@ -73,7 +75,9 @@ public class MainActivity extends Activity {
             }
         });
         web.addJavascriptInterface(new Object() {
-            @JavascriptInterface public void autoBackup(String json) { backupVault.saveAutomatic(json); }
+            @JavascriptInterface public void autoBackup(String json) { backupVault.saveAutomatic(json); externalBackup.saveNow(json); }
+            @JavascriptInterface public void choosePortableBackup(String json) { runOnUiThread(()->externalBackup.selectDestination(json)); }
+            @JavascriptInterface public void restorePortableBackup(String json) { runOnUiThread(()->externalBackup.chooseRestore(json)); }
             @JavascriptInterface public void listEncryptedBackups() { backupVault.listBackups(); }
             @JavascriptInterface public void restoreEncryptedBackup(String name,String currentJson) { backupVault.restore(name,currentJson); }
             @JavascriptInterface public void openPrivacySettings() { runOnUiThread(() -> privacyLock.showSettings()); }
@@ -140,6 +144,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==ExternalBackup.PICK_TARGET || requestCode==ExternalBackup.PICK_RESTORE) externalBackup.onResult(requestCode,resultCode,data);
         if (requestCode == REQUEST_BACKUP_FILE && pendingFileSelection != null) {
             Uri[] uris = resultCode == RESULT_OK && data != null && data.getData() != null
                 ? new Uri[]{data.getData()} : null;
@@ -153,6 +158,7 @@ public class MainActivity extends Activity {
     @Override protected void onDestroy() {
         if (privacyLock != null) privacyLock.onDestroy();
         if (backupVault != null) backupVault.close();
+        if (externalBackup != null) externalBackup.close();
         if (updater != null) updater.onDestroy();
         if (pendingFileSelection != null) {
             pendingFileSelection.onReceiveValue(null);
