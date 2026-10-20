@@ -47,6 +47,7 @@ public final class BackupVault {
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private boolean closed;
     private byte[] lastDigest;
+    private volatile boolean forceNewAfterRestore;
 
     public BackupVault(Activity activity,WebView web) {
         this.activity=activity;this.app=activity.getApplicationContext();this.web=web;
@@ -58,8 +59,10 @@ public final class BackupVault {
         worker.execute(()->{
             try {
                 byte[] digest=MessageDigest.getInstance("SHA-256").digest(json.getBytes(StandardCharsets.UTF_8));
-                if(lastDigest!=null&&MessageDigest.isEqual(lastDigest,digest))return;
-                persist(json,false);
+                if(lastDigest!=null&&MessageDigest.isEqual(lastDigest,digest)&&!forceNewAfterRestore)return;
+                boolean force=forceNewAfterRestore;
+                persist(json,force);
+                forceNewAfterRestore=false;
                 lastDigest=digest;
                 notifyStatus("자동 암호화 백업 완료");
             } catch(Exception e){
@@ -93,6 +96,9 @@ public final class BackupVault {
                 if(!valid(decrypted))throw new IOException("Backup content invalid");
                 // Preserve the data being replaced as a separate restorable checkpoint.
                 if(valid(currentJson))persist(currentJson,true);
+                // The subsequent auto-backup of restored data must NOT overwrite the
+                // pre-restore checkpoint, even if both were saved within 15 minutes.
+                forceNewAfterRestore=true;
                 lastDigest=null;
                 dispatch("window.LifePlanVaultRestored && window.LifePlanVaultRestored("+JSONObject.quote(decrypted)+");");
             } catch(Exception e){
