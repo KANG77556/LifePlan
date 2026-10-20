@@ -177,7 +177,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 .diary-history-row .diary-history-text{display:block;color:#334967;line-height:1.5;font-size:13px;overflow-wrap:anywhere}
 
 
-/* v0.5.1 monthly overview: tap dates to open weekday/exception plan. */
+/* v0.5.2 monthly overview: tap dates to open weekday/exception plan. */
 .month-calendar{padding:15px 12px;border:1px solid #e2eafb;border-radius:18px;background:linear-gradient(150deg,#fff,#f9faff)}
 .month-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
 .month-head h3{font-size:18px;margin:0}
@@ -205,7 +205,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 @media(max-width:360px){.month-days button{min-height:47px}.month-days{gap:2px}}
 
 </style></head><body><header class="hero"><div class="hero-inner">
-<div class="hero-top"><span id="greeting" class="hero-kicker">나의 하루, 나의 미래</span><span class="hero-version">v0.5.1</span></div>
+<div class="hero-top"><span id="greeting" class="hero-kicker">나의 하루, 나의 미래</span><span class="hero-version">v0.5.2</span></div>
 <div class="hero-main"><div><h1>라이프플랜</h1><p class="hero-date" id="today"></p></div><span class="hero-symbol" id="heroSymbol" aria-hidden="true">☀</span></div>
 <div class="hero-stats" aria-label="오늘의 요약">
 <button class="hero-stat" type="button" onclick="goTo('daily','dailyTasks')"><span>오늘 일정</span><strong id="heroTaskCount">-</strong></button>
@@ -265,7 +265,7 @@ header.hero:not(.compact) .hero-stat strong{font-size:14px}
 <section class="page secondary-page" id="recurring"><div class="card"><div class="flex"><h3>반복 생활관리</h3><button class="btn" onclick="editRecurring()">+ 등록</button></div><p class="section-note">주기적으로 해야 할 일을 자동으로 알려줍니다.</p><div id="recurringSummary" class="secondary-summary"></div><div class="preset-row" aria-label="생활관리 빠른 등록"><button type="button" onclick="addRecurringPreset('nails')">+ 손톱 깎기 · 매주</button><button type="button" onclick="addRecurringPreset('bedding')">+ 침구 세탁 · 격주</button><button type="button" onclick="addRecurringPreset('hair')">+ 이발 · 30일</button></div><button class="soft" type="button" onclick="window.LifePlanNative?.requestReminderPermission?.()">알림 권한 허용</button><div id="recurringList"></div></div></section>
 <section class="page secondary-page" id="goals"><div class="card"><div class="flex"><h3>인생 목표</h3><button class="btn" onclick="editGoal()">+ 목표</button></div><div id="goalSummary" class="secondary-summary"></div><div id="goallist"></div></div></section>
 <section class="page secondary-page" id="habits"><div class="card"><div class="flex"><h3>습관 체크</h3><button class="btn" onclick="editHabit()">+ 습관</button></div><div id="habitSummary" class="secondary-summary"></div><div id="habitlist"></div></div></section>
-<section class="page secondary-page" id="settings"><div class="card"><h3>앱 정보와 업데이트</h3><div class="secondary-summary">설치 버전: <strong>v0.5.1</strong> · 기존 데이터 유지</div><label style="display:flex;align-items:center;gap:12px;margin:15px 0;color:#344562"><input type="checkbox" id="autoUpdate" style="width:23px;height:23px" checked onchange="setAutoUpdate(this.checked)"><span>자동 업데이트 확인·다운로드</span></label><p class="section-note">새 버전은 자동으로 내려받고 설치 확인 화면을 엽니다. 최종 설치는 Android에서 한 번 승인해야 합니다.</p><button class="btn" type="button" onclick="update()">최신 버전 확인 및 설치</button> <button class="soft" type="button" onclick="retryUpdateDownload()">다운로드 초기화·재시도</button><p id="updateStatus" class="section-note" role="status" aria-live="polite"></p></div><div class="card"><h3>생활계획표 일정 알림</h3>
+<section class="page secondary-page" id="settings"><div class="card"><h3>앱 정보와 업데이트</h3><div class="secondary-summary">설치 버전: <strong>v0.5.2</strong> · 기존 데이터 유지</div><label style="display:flex;align-items:center;gap:12px;margin:15px 0;color:#344562"><input type="checkbox" id="autoUpdate" style="width:23px;height:23px" checked onchange="setAutoUpdate(this.checked)"><span>자동 업데이트 확인·다운로드</span></label><p class="section-note">새 버전은 자동으로 내려받고 설치 확인 화면을 엽니다. 최종 설치는 Android에서 한 번 승인해야 합니다.</p><button class="btn" type="button" onclick="update()">최신 버전 확인 및 설치</button> <button class="soft" type="button" onclick="retryUpdateDownload()">다운로드 초기화·재시도</button><p id="updateStatus" class="section-note" role="status" aria-live="polite"></p></div><div class="card"><h3>생활계획표 일정 알림</h3>
  <p class="section-note">요일별 기본 계획과 특별 날짜 계획을 기준으로 일정 시작 전에 알립니다. Android 배터리 최적화에 따라 알림 시간이 약간 늦어질 수 있습니다.</p>
  <label for="scheduleLead">일정 시작 전 알림 시점</label>
  <select id="scheduleLead" onchange="setScheduleLead(this.value)">
