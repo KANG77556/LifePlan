@@ -154,7 +154,10 @@ public final class LifePlanWidget extends AppWidgetProvider {
                 v.setTextViewText(R.id.widget_dial_current,summary.current==null?"현재 일정 없음":summary.current.task.optString("name"));
                 v.setTextViewText(R.id.widget_dial_current_time,summary.current==null?"":summary.current.task.optString("start")+"–"+summary.current.task.optString("end"));
                 v.setTextViewText(R.id.widget_dial_next,summary.next==null?"다음 일정 없음":summary.next.task.optString("name"));
-                v.setTextViewText(R.id.widget_dial_next_time,summary.next==null?"":summary.next.task.optString("start")+"–"+summary.next.task.optString("end"));
+                int minuteOfDay=now.get(Calendar.HOUR_OF_DAY)*60+now.get(Calendar.MINUTE);
+                int remaining=summary.next==null?0:Math.max(0,summary.next.start-minuteOfDay);
+                String countdown=summary.next==null?"":(remaining>=60?(remaining/60)+"시간 "+(remaining%60)+"분 후":remaining+"분 후");
+                v.setTextViewText(R.id.widget_dial_next_time,summary.next==null?"":summary.next.task.optString("start")+" · "+countdown);
                 int[] rows={R.id.widget_dial_row1,R.id.widget_dial_row2,R.id.widget_dial_row3,R.id.widget_dial_row4};
                 for(int row=0;row<rows.length;row++) {
                     if(row<summary.today.size()) {
