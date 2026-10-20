@@ -23,19 +23,24 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> pendingFileSelection;
     private static final int REQUEST_BACKUP_FILE = 406;
     private AppUpdater updater;
+    private BackupVault backupVault;
+    private PrivacyLock privacyLock;
     private String pendingWidgetPage;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         if (getIntent()!=null && LifePlanWidget.ACTION_OPEN.equals(getIntent().getAction())) pendingWidgetPage=getIntent().getStringExtra("page");
         web = new WebView(this);
+        privacyLock = new PrivacyLock(this,web);
+        privacyLock.initialize();
+        backupVault = new BackupVault(this,web);
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         settings.setDefaultTextEncodingName("UTF-8");
         web.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
-                if (url.startsWith("file:///android_asset/")) { updater.onWebReady(); openWidgetPage(); }
+                if (url.startsWith("file:///android_asset/")) { updater.onWebReady(); privacyLock.sendStatus(); backupVault.listBackups(); openWidgetPage(); }
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 if (url.startsWith("https://")) {
@@ -66,6 +71,10 @@ public class MainActivity extends Activity {
             }
         });
         web.addJavascriptInterface(new Object() {
+            @JavascriptInterface public void autoBackup(String json) { backupVault.saveAutomatic(json); }
+            @JavascriptInterface public void listEncryptedBackups() { backupVault.listBackups(); }
+            @JavascriptInterface public void restoreEncryptedBackup(String name,String currentJson) { backupVault.restore(name,currentJson); }
+            @JavascriptInterface public void openPrivacySettings() { runOnUiThread(() -> privacyLock.showSettings()); }
             @JavascriptInterface public void syncWidgets(String json) { LifePlanWidget.sync(MainActivity.this, json); }
             @JavascriptInterface public void syncScheduleAlarms(String json) { ScheduleAlertReceiver.sync(MainActivity.this,json); }
             @JavascriptInterface public void syncReminders(String json) { runOnUiThread(() -> ReminderReceiver.schedule(MainActivity.this,json)); }
@@ -127,9 +136,11 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override protected void onResume() { super.onResume(); if (updater != null) updater.onResume(); }
-    @Override protected void onPause() { if (updater != null) updater.onPause(); super.onPause(); }
+    @Override protected void onResume() { super.onResume(); if (privacyLock != null) privacyLock.onResume(); if (updater != null) updater.onResume(); }
+    @Override protected void onPause() { if (privacyLock != null) privacyLock.onPause(); if (updater != null) updater.onPause(); super.onPause(); }
     @Override protected void onDestroy() {
+        if (privacyLock != null) privacyLock.onDestroy();
+        if (backupVault != null) backupVault.close();
         if (updater != null) updater.onDestroy();
         if (pendingFileSelection != null) {
             pendingFileSelection.onReceiveValue(null);
