@@ -80,7 +80,7 @@ header.hero.compact::after{display:none}
 body:has(header.hero.compact) .wrap{padding-top:12px}
 @media(max-width:370px){header.hero.compact .hero-main h1{font-size:21px}}
 
-/* v0.5.1 compact overview + functional secondary screens */
+/* v0.5.2 compact overview + functional secondary screens */
 header.hero:not(.compact){padding:15px 15px 13px;border-radius:0 0 25px 25px}
 header.hero:not(.compact) .hero-main h1{font-size:27px;margin:4px 0 4px}
 header.hero:not(.compact) .hero-main .hero-date{font-size:13px}
@@ -418,7 +418,34 @@ function renderSecondaryPanels(){
   $('dataSummary').textContent='저장된 데이터: 일정 '+db.tasks.length+'개 · 반복관리 '+db.recurring.length+'개 · 목표 '+db.goals.length+'개 · 습관 '+db.habits.length+'개';
 }
 
-function taskDone(id,checked){if(viewDate!==date())return;let t=tasksFor(viewDate).find(x=>x.id===id);if(t){t.done=checked?date():'';save()}}
+
+function ensureExecutionDay(day){
+ if(day>date()||!validPlanDate(day))return null;
+ if(!db.executionLog[day])db.executionLog[day]=LifePlanAnalytics.snapshot(tasksFor(day),day,new Date().toISOString());
+ return db.executionLog[day];
+}
+function toggleExecution(day,id,checked){
+ const record=ensureExecutionDay(day);if(!record)return;
+ db.executionLog[day]=LifePlanAnalytics.setChecked(record,id,checked,new Date().toISOString());
+ if(day===date()){let t=tasksFor(day).find(t=>String(t.id)===String(id));if(t)t.done=checked?day:''}
+ save();
+}
+function renderExecution(){
+ const today=date(),active=today===viewDate?ensureExecutionDay(today):db.executionLog[viewDate];
+ const stats=LifePlanAnalytics.dayStats(active);
+ $('executionDayRate').textContent=stats&&stats.rate!==null?stats.rate+'%':'기록 없음';
+ $('executionDayInfo').textContent=stats?stats.done+'/'+stats.total+'개 완료 · 기록된 일정 기준':'오늘 완료 체크를 하면 실천율 기록이 시작됩니다.';
+ const format=x=>x.rate===null?'일정 없음':x.done+'/'+x.total+'개 · '+x.rate+'%';
+ const week=LifePlanAnalytics.periodStats(db.executionLog,LifePlanAnalytics.weekDays(today),today);
+ const month=LifePlanAnalytics.periodStats(db.executionLog,LifePlanAnalytics.monthDays(today),today);
+ $('executionWeekSummary').textContent='이번 주 · 기록 '+week.trackedDays+'일 · '+(week.rate===null?'완료 기록 없음':format(week));
+ $('executionMonthSummary').textContent='이번 달 · 기록 '+month.trackedDays+'일 · '+(month.rate===null?'완료 기록 없음':format(month));
+ const rows=result=>result.days.filter(x=>x.state!=='future').map(x=>'<div class="week-task"><span>'+esc(x.date.slice(5))+'</span><span>'+(x.stats?format(x.stats):'기록 없음')+'</span></div>').join('');
+ $('executionWeekDays').innerHTML=rows(week);
+ $('executionMonthDays').innerHTML=rows(month);
+}
+
+function taskDone(id,checked){if(viewDate!==date())return;toggleExecution(viewDate,id,checked)}
 function intervals(t){let a=min(t.start),b=min(t.end);return b>a?[[a,b]]:[[a,1440],[0,b]]}
 function hasOverlap(id,start,end,days){let current={start,end};if(viewingSpecial())return db.specialPlans[viewDate].tasks.some(t=>t.id!==id&&intervals(current).some(x=>intervals(t).some(y=>x[0]<y[1]&&y[0]<x[1])));let ds=$('once')?.checked?[selectedDay]:days;return db.tasks.some(t=>t.id!==id&&ds.some(d=>taskDays(t).includes(d))&&intervals(current).some(x=>intervals(t).some(y=>x[0]<y[1]&&y[0]<x[1])))}
 function timeString(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')}
@@ -454,7 +481,7 @@ function completeRecurring(id){let t=db.recurring.find(x=>x.id===id);if(t){t.las
 function renderRecurring(){let list=$('recurringList');if(!list)return;let due=db.recurring.filter(t=>recurringDue(t));$('recurringSummary').textContent='등록 '+db.recurring.length+'개 · 미완료 '+due.length+'개 · 완료한 일은 다음 주기에 다시 알립니다.';let rest=db.recurring.filter(t=>!recurringDue(t));list.innerHTML='<p class="muted">확인할 일 '+due.length+'개</p>'+([...due,...rest].map(t=>{let overdue=recurringDue(t),scheduled=recurringNextDate(t),state=overdue?(scheduled<date()?'지난 일정 미완료':'오늘 확인 필요'):'다음 예정일';let repeat=t.mode==='weekly'?'매주 '+D[t.weekday]+'요일':t.mode==='monthly'?'매월 '+t.monthDay+'일':'완료 후 '+t.days+'일';return '<div class="item"><div class="grow"><b>'+esc(t.name)+'</b><div class="sub">'+state+' '+scheduled+' · '+repeat+' · '+esc(t.time)+'</div></div>'+(overdue?'<button class="btn" onclick="completeRecurring('+t.id+')">완료</button>':'')+'<button class="soft" onclick="editRecurring('+t.id+')">수정</button></div>'}).join('')||'<p class="muted">반복할 일을 등록하세요.</p>')}
 function adjustGoal(id,delta){let g=db.goals.find(x=>x.id===id);if(g){g.progress=Math.max(0,Math.min(100,(Number(g.progress)||0)+delta));save()}}function deleteGoal(){let id=+$('gid').value;if(!id||!confirm('이 목표를 삭제할까요?'))return;db.goals=db.goals.filter(g=>g.id!==id);$('goalDialog').close();save()}function editGoal(id){let g=db.goals.find(x=>x.id===id);$('gid').value=g?.id||'';$('gname').value=g?.name||'';$('horizon').value=g?.horizon||'1년';$('progress').value=g?.progress||0;$('deleteGoal').hidden=!g;$('goalDialog').showModal()}function saveGoal(){let name=$('gname').value.trim();if(!name)return;let id=+$('gid').value||Date.now(),g={id,name,horizon:$('horizon').value,progress:Math.max(0,Math.min(100,Number($('progress').value)||0))},i=db.goals.findIndex(x=>x.id===id);if(i<0)db.goals.push(g);else db.goals[i]=g;$('goalDialog').close();save()}
 function editHabit(){$('hname').value='';$('habitDialog').showModal()}function habitHistory(h){return Array.isArray(h.dates)?h.dates:(h.done?[h.done]:[])}function habitStreak(h){let days=habitHistory(h),day=date(),count=0;if(!days.includes(day))day=addDays(day,-1);while(days.includes(day)){count++;day=addDays(day,-1)}return count}function saveHabit(){let name=$('hname').value.trim();if(name)db.habits.push({id:Date.now(),name,done:'',dates:[]});$('habitDialog').close();save()}function habitCheck(id,v){let h=db.habits.find(x=>x.id===id);if(h){let today=date();h.dates=habitHistory(h).filter(x=>x!==today);if(v)h.dates.push(today);h.done=v?today:'';save()}}function habitDelete(id){if(!confirm('습관을 삭제할까요?'))return;db.habits=db.habits.filter(h=>h.id!==id);save()}
-function startRestore(){let input=$('upload');input.value='';input.click()}function backup(){let b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='lifeplan-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}function restore(e){let f=e.files[0];if(!f)return;f.text().then(s=>{let x=JSON.parse(s);if(!x||!Array.isArray(x.tasks)||!Array.isArray(x.goals)||!Array.isArray(x.habits))throw Error();x.habits.forEach(h=>{if(!Array.isArray(h.dates))h.dates=h.done?[h.done]:[]});x.recurring=Array.isArray(x.recurring)?x.recurring:[];x.specialPlans=x.specialPlans&&typeof x.specialPlans==='object'&&!Array.isArray(x.specialPlans)?x.specialPlans:{};x.templates=x.templates&&typeof x.templates==='object'&&!Array.isArray(x.templates)?x.templates:{};x.diaryEntries=normalizeDiaryEntries(x.diaryEntries);x.scheduleLead=[0,5,10,30].includes(Number(x.scheduleLead))?Number(x.scheduleLead):0;if(confirm('현재 데이터를 복원 파일로 교체할까요?')){db=x;save()}}).catch(()=>alert('잘못된 백업 파일입니다.'))}
+function startRestore(){let input=$('upload');input.value='';input.click()}function backup(){let b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='lifeplan-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}function restore(e){let f=e.files[0];if(!f)return;f.text().then(s=>{let x=JSON.parse(s);if(!x||!Array.isArray(x.tasks)||!Array.isArray(x.goals)||!Array.isArray(x.habits))throw Error();x.habits.forEach(h=>{if(!Array.isArray(h.dates))h.dates=h.done?[h.done]:[]});x.recurring=Array.isArray(x.recurring)?x.recurring:[];x.specialPlans=x.specialPlans&&typeof x.specialPlans==='object'&&!Array.isArray(x.specialPlans)?x.specialPlans:{};x.templates=x.templates&&typeof x.templates==='object'&&!Array.isArray(x.templates)?x.templates:{};x.diaryEntries=normalizeDiaryEntries(x.diaryEntries);x.executionLog=LifePlanAnalytics.normalizeLog(x.executionLog);x.scheduleLead=[0,5,10,30].includes(Number(x.scheduleLead))?Number(x.scheduleLead):0;if(confirm('현재 데이터를 복원 파일로 교체할까요?')){db=x;save()}}).catch(()=>alert('잘못된 백업 파일입니다.'))}
 function versionParts(v){return String(v).replace(/^v/,'').split('-')[0].split('.').map(x=>Number(x)||0)}
 function compareVersions(a,b){let x=versionParts(a),y=versionParts(b);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return (x[i]||0)-(y[i]||0)}return 0}
 function setAutoUpdate(checked){if(window.LifePlanNative?.setAutoUpdate)window.LifePlanNative.setAutoUpdate(Boolean(checked))}
