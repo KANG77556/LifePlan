@@ -55,6 +55,33 @@ jobs:
                   raise SystemExit('Missing app hook: '+token)
           PY
           node --check /tmp/lifeplan-app.js
+      - name: Test portable encrypted archive
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lifeplan-portable/kr/lifeplan/app
+          cp app/src/main/java/kr/lifeplan/app/PortableArchive.java /tmp/lifeplan-portable/kr/lifeplan/app/
+          cat > /tmp/lifeplan-portable/PortableTest.java <<'JAVA'
+          import kr.lifeplan.app.PortableArchive;
+          import java.util.Arrays;
+          public class PortableTest {
+            static void check(boolean ok){if(!ok)throw new AssertionError();}
+            public static void main(String[] args)throws Exception {
+              char[] password="strong-pass-2026".toCharArray();
+              String source="{\\\"tasks\\\":[],\\\"goals\\\":[],\\\"habits\\\":[]}";
+              byte[] encrypted=PortableArchive.encrypt(source,password);
+              byte[] second=PortableArchive.encrypt(source,password);
+              check(!Arrays.equals(encrypted,second));
+              check(source.equals(PortableArchive.decrypt(encrypted,password)));
+              boolean bad=false;try{PortableArchive.decrypt(encrypted,"wrong-passphrase".toCharArray());}catch(Exception e){bad=true;}check(bad);
+              encrypted[encrypted.length-1]^=1;
+              bad=false;try{PortableArchive.decrypt(encrypted,password);}catch(Exception e){bad=true;}check(bad);
+              check(!PortableArchive.validPassword("short".toCharArray()));
+              System.out.println("Portable AES-GCM encryption and wrong-password tests passed");
+            }
+          }
+          JAVA
+          javac -d /tmp/lifeplan-portable /tmp/lifeplan-portable/kr/lifeplan/app/*.java /tmp/lifeplan-portable/PortableTest.java
+          java -cp /tmp/lifeplan-portable PortableTest
       - name: Test PIN protection and encrypted backup retention rules
         run: |
           set -euo pipefail
